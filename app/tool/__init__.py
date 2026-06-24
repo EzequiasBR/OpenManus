@@ -9,7 +9,7 @@ from app.tool.str_replace_editor import StrReplaceEditor
 from app.tool.terminate import Terminate
 from app.tool.tool_collection import ToolCollection
 from app.tool.web_search import WebSearch
-
+from app.tool.daytona_sandbox import DaytonaSandboxTool
 
 __all__ = [
     "BaseTool",
@@ -23,4 +23,5 @@ __all__ = [
     "PlanningTool",
     "Crawl4aiTool",
     "ImageGeneratorTool",
+    "DaytonaSandboxTool",
 ]

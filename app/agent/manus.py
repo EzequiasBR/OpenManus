@@ -14,6 +14,7 @@ from app.tool.image_generator import ImageGeneratorTool
 from app.tool.mcp import MCPClients, MCPClientTool
 from app.tool.python_execute import PythonExecute
 from app.tool.str_replace_editor import StrReplaceEditor
+from app.tool.daytona_sandbox import DaytonaSandboxTool
 
 
 class Manus(ToolCallAgent):
@@ -40,6 +41,7 @@ class Manus(ToolCallAgent):
             AskHuman(),
             ImageGeneratorTool(),
             Terminate(),
+            DaytonaSandboxTool(),
         )
     )
 
