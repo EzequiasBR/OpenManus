@@ -1,58 +1,35 @@
 import os
 import sys
-import httpx
+
+from app.integrations.daytona_http import DaytonaHTTPClient, DaytonaHTTPError
 
 
-BASE_URL = "https://app.daytona.io/api"
-
-
-def get_headers() -> dict:
-    api_key = os.getenv("DAYTONA_API_KEY")
-    if not api_key:
-        raise RuntimeError("DAYTONA_API_KEY não está definida no ambiente.")
-
-    return {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-
-
-def request(method: str, path: str, **kwargs):
-    url = f"{BASE_URL}{path}"
-    headers = get_headers()
-
-    with httpx.Client(timeout=30.0) as client:
-        response = client.request(method, url, headers=headers, **kwargs)
-
-    print(f"{method} {path}")
-    print(f"Status: {response.status_code}")
-
-    text = response.text
-    if len(text) > 1500:
-        text = text[:1500] + "\n... [truncated]"
-
-    print(text)
-    print("-" * 80)
-
-    return response
-
-
-def main():
+def main() -> None:
     print("Daytona HTTP API smoke test")
     print("DAYTONA_API_KEY:", bool(os.getenv("DAYTONA_API_KEY")))
     print("-" * 80)
 
-    current_key = request("GET", "/api-keys/current")
-    if current_key.status_code != 200:
-        print("Falha: API key não validou.")
-        sys.exit(1)
+    try:
+        client = DaytonaHTTPClient()
 
-    sandboxes = request("GET", "/sandbox")
-    if sandboxes.status_code != 200:
-        print("Falha: não foi possível listar sandboxes.")
-        sys.exit(1)
+        key_info = client.validate_key()
+        print("validate_key(): OK")
+        print(key_info)
+        print("-" * 80)
 
-    print("OK: Daytona HTTP API está acessível.")
+        sandboxes = client.list_sandboxes()
+        print("list_sandboxes(): OK")
+        print(sandboxes)
+        print("-" * 80)
+
+        print("OK: Daytona HTTP API está acessível via camada app.integrations.daytona_http.")
+
+    except DaytonaHTTPError as exc:
+        print(f"ERRO DAYTONA: {exc}")
+        sys.exit(1)
+    except Exception as exc:
+        print(f"ERRO INESPERADO: {type(exc).__name__}: {exc}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
