@@ -200,3 +200,18 @@ cython_debug/
 
 # node
 node_modules
+
+config.toml
+output_images/
+.bak/
+*.bak
+test_groq.py
+output_images/
+test_groq.py
+
+config.toml
+output_images/
+.bak/
+*.bak
+test_groq.py
+config/config.toml

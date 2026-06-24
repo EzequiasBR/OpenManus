@@ -1,10 +1,25 @@
 import json
+import os
 import threading
 import tomllib
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
+
+
+def resolve_env(value: str) -> str:
+    """Resolve env:VAR references in config values."""
+    if isinstance(value, str) and value.startswith("env:"):
+        env_var = value[4:]
+        resolved = os.environ.get(env_var)
+        if resolved is None:
+            raise ValueError(
+                f"Environment variable '{env_var}' is not set "
+                f"(referenced in config as '{value}')"
+            )
+        return resolved
+    return value
 
 
 def get_project_root() -> Path:
@@ -106,7 +121,7 @@ class SandboxSettings(BaseModel):
 
 
 class DaytonaSettings(BaseModel):
-    daytona_api_key: str
+    daytona_api_key: str = "not_used_local"
     daytona_server_url: Optional[str] = Field(
         "https://app.daytona.io/api", description=""
     )
@@ -217,9 +232,15 @@ class Config:
     @staticmethod
     def _get_config_path() -> Path:
         root = PROJECT_ROOT
+        # Check root config.toml first (user-friendly location)
+        root_config = root / "config.toml"
+        if root_config.exists():
+            return root_config
+        # Then check config/config.toml (canonical location)
         config_path = root / "config" / "config.toml"
         if config_path.exists():
             return config_path
+        # Fall back to example
         example_path = root / "config" / "config.example.toml"
         if example_path.exists():
             return example_path
@@ -240,7 +261,7 @@ class Config:
         default_settings = {
             "model": base_llm.get("model"),
             "base_url": base_llm.get("base_url"),
-            "api_key": base_llm.get("api_key"),
+            "api_key": resolve_env(base_llm.get("api_key", "")),
             "max_tokens": base_llm.get("max_tokens", 4096),
             "max_input_tokens": base_llm.get("max_input_tokens"),
             "temperature": base_llm.get("temperature", 1.0),
@@ -314,7 +335,13 @@ class Config:
             "llm": {
                 "default": default_settings,
                 **{
-                    name: {**default_settings, **override_config}
+                    name: {
+                        **default_settings,
+                        **{
+                            k: resolve_env(v) if k == "api_key" else v
+                            for k, v in override_config.items()
+                        },
+                    }
                     for name, override_config in llm_overrides.items()
                 },
             },
