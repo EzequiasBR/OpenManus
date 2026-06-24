@@ -279,6 +279,177 @@ class DaytonaHTTPClient:
             json=payload,
         )
 
+    def create_folder(
+        self,
+        sandbox_id: str,
+        path: str,
+        mode: str = "755",
+    ) -> Dict[str, Any]:
+        """
+        Cria uma pasta dentro da sandbox.
+
+        Endpoint:
+        POST /files/folder?path=...
+        """
+        if not path or not path.strip():
+            raise DaytonaHTTPError("path não pode estar vazio.")
+
+        return self._toolbox_request(
+            sandbox_id=sandbox_id,
+            method="POST",
+            path="/files/folder",
+            params={"path": path.strip()},
+            json={"mode": mode},
+        )
+
+    def upload_file(
+        self,
+        sandbox_id: str,
+        remote_path: str,
+        content: bytes,
+        filename: str = "upload.bin",
+        content_type: str = "application/octet-stream",
+    ) -> Dict[str, Any]:
+        """
+        Envia um arquivo para a sandbox.
+
+        Endpoint:
+        POST /files/upload?path=...
+
+        Contrato validado:
+        - multipart/form-data
+        - campo: file
+        """
+        if not sandbox_id or not sandbox_id.strip():
+            raise DaytonaHTTPError("sandbox_id não pode estar vazio.")
+
+        if not remote_path or not remote_path.strip():
+            raise DaytonaHTTPError("remote_path não pode estar vazio.")
+
+        if content is None:
+            raise DaytonaHTTPError("content não pode ser None.")
+
+        toolbox_base_url = "https://proxy.app.daytona.io/toolbox"
+        url = f"{toolbox_base_url}/{sandbox_id.strip()}/files/upload"
+
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                response = client.post(
+                    url,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                    },
+                    params={"path": remote_path.strip()},
+                    files={
+                        "file": (filename, content, content_type),
+                    },
+                )
+        except httpx.TimeoutException as exc:
+            raise DaytonaHTTPError("Timeout ao enviar arquivo para Daytona.") from exc
+        except httpx.HTTPError as exc:
+            raise DaytonaHTTPError(
+                f"Erro HTTP ao enviar arquivo: {type(exc).__name__}: {exc}"
+            ) from exc
+
+        if response.status_code < 200 or response.status_code >= 300:
+            raise DaytonaHTTPError(
+                f"Daytona File Upload retornou status {response.status_code}: "
+                f"{response.text[:1000]}"
+            )
+
+        if not response.text.strip():
+            return {}
+
+        try:
+            return response.json()
+        except ValueError:
+            return {"raw": response.text}
+
+    def download_file(
+        self,
+        sandbox_id: str,
+        remote_path: str,
+    ) -> bytes:
+        """
+        Baixa um arquivo da sandbox.
+
+        Endpoint:
+        GET /files/download?path=...
+        """
+        if not remote_path or not remote_path.strip():
+            raise DaytonaHTTPError("remote_path não pode estar vazio.")
+
+        toolbox_base_url = "https://proxy.app.daytona.io/toolbox"
+        url = f"{toolbox_base_url}/{sandbox_id.strip()}/files/download"
+
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                response = client.get(
+                    url,
+                    headers=self._headers(),
+                    params={"path": remote_path.strip()},
+                )
+        except httpx.TimeoutException as exc:
+            raise DaytonaHTTPError("Timeout ao baixar arquivo da Daytona.") from exc
+        except httpx.HTTPError as exc:
+            raise DaytonaHTTPError(
+                f"Erro HTTP ao baixar arquivo: {type(exc).__name__}: {exc}"
+            ) from exc
+
+        if response.status_code < 200 or response.status_code >= 300:
+            raise DaytonaHTTPError(
+                f"Daytona File Download retornou status {response.status_code}: "
+                f"{response.text[:1000]}"
+            )
+
+        return response.content
+
+    def file_info(
+        self,
+        sandbox_id: str,
+        remote_path: str,
+    ) -> Dict[str, Any]:
+        """
+        Obtém metadados de um arquivo/pasta dentro da sandbox.
+
+        Endpoint:
+        GET /files/info?path=...
+        """
+        if not remote_path or not remote_path.strip():
+            raise DaytonaHTTPError("remote_path não pode estar vazio.")
+
+        return self._toolbox_request(
+            sandbox_id=sandbox_id,
+            method="GET",
+            path="/files/info",
+            params={"path": remote_path.strip()},
+        )
+
+    def delete_path(
+        self,
+        sandbox_id: str,
+        remote_path: str,
+        recursive: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Remove arquivo ou pasta dentro da sandbox.
+
+        Endpoint:
+        DELETE /files?path=...&recursive=...
+        """
+        if not remote_path or not remote_path.strip():
+            raise DaytonaHTTPError("remote_path não pode estar vazio.")
+
+        return self._toolbox_request(
+            sandbox_id=sandbox_id,
+            method="DELETE",
+            path="/files",
+            params={
+                "path": remote_path.strip(),
+                "recursive": str(recursive).lower(),
+            },
+        )
+
     def get_project_dir(self, sandbox_id: str) -> Dict[str, Any]:
         """
         Obtém o diretório raiz do projeto dentro da sandbox.
