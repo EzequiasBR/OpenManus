@@ -117,7 +117,7 @@ class DaytonaHTTPClient:
     def create_sandbox(
         self,
         name: str,
-        image: str = "debian:12.9",
+        image: str = "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
         language: str = "python",
         cpu: int = 1,
         memory: int = 1,
@@ -189,3 +189,131 @@ class DaytonaHTTPClient:
             raise DaytonaHTTPError("sandbox_id_or_name não pode estar vazio.")
 
         return self._request("DELETE", f"/sandbox/{sandbox_id_or_name.strip()}")
+
+    def _toolbox_request(
+        self,
+        sandbox_id: str,
+        method: str,
+        path: str,
+        json: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Chama a Toolbox API de uma sandbox específica.
+
+        URL base:
+        https://proxy.app.daytona.io/toolbox/{sandboxId}/toolbox
+        """
+        if not sandbox_id or not sandbox_id.strip():
+            raise DaytonaHTTPError("sandbox_id não pode estar vazio.")
+
+        toolbox_base_url = "https://proxy.app.daytona.io/toolbox"
+        url = f"{toolbox_base_url}/{sandbox_id.strip()}{path}"
+
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                response = client.request(
+                    method=method,
+                    url=url,
+                    headers=self._headers(),
+                    json=json,
+                    params=params,
+                )
+        except httpx.TimeoutException as exc:
+            raise DaytonaHTTPError(
+                f"Timeout ao chamar Daytona Toolbox API: {method} {path}"
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise DaytonaHTTPError(
+                f"Erro HTTP ao chamar Daytona Toolbox API: {type(exc).__name__}: {exc}"
+            ) from exc
+
+        if response.status_code < 200 or response.status_code >= 300:
+            body = response.text[:1000]
+            raise DaytonaHTTPError(
+                f"Daytona Toolbox API retornou status {response.status_code} "
+                f"em {method} {path}: {body}"
+            )
+
+        if not response.text.strip():
+            return {}
+
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise DaytonaHTTPError(
+                f"Daytona Toolbox API retornou resposta não JSON em "
+                f"{method} {path}: {response.text[:500]}"
+            ) from exc
+
+    def execute_command(
+        self,
+        sandbox_id: str,
+        command: str,
+        cwd: str = "/home/daytona",
+        env: Optional[Dict[str, str]] = None,
+        timeout: int = 15,
+    ) -> Dict[str, Any]:
+        """
+        Executa um comando stateless dentro da sandbox.
+
+        Endpoint:
+        POST /process/execute
+
+        A API Daytona espera 'command' como string.
+        """
+        if not command or not command.strip():
+            raise DaytonaHTTPError("command não pode estar vazio.")
+
+        payload = {
+            "command": command.strip(),
+            "cwd": cwd,
+            "env": env or {"PYTHONUNBUFFERED": "1"},
+            "timeout": timeout,
+        }
+
+        return self._toolbox_request(
+            sandbox_id=sandbox_id,
+            method="POST",
+            path="/process/execute",
+            json=payload,
+        )
+
+    def get_project_dir(self, sandbox_id: str) -> Dict[str, Any]:
+        """
+        Obtém o diretório raiz do projeto dentro da sandbox.
+
+        Endpoint:
+        GET /toolbox/{sandboxId}/toolbox/project-dir
+        """
+        return self._toolbox_request(
+            sandbox_id=sandbox_id,
+            method="GET",
+            path="/project-dir",
+        )
+
+    def get_user_home_dir(self, sandbox_id: str) -> Dict[str, Any]:
+        """
+        Obtém o diretório home do usuário dentro da sandbox.
+
+        Endpoint:
+        GET /toolbox/{sandboxId}/toolbox/user-home-dir
+        """
+        return self._toolbox_request(
+            sandbox_id=sandbox_id,
+            method="GET",
+            path="/user-home-dir",
+        )
+
+    def get_work_dir(self, sandbox_id: str) -> Dict[str, Any]:
+        """
+        Obtém o diretório padrão de trabalho dentro da sandbox.
+
+        Endpoint:
+        GET /toolbox/{sandboxId}/toolbox/work-dir
+        """
+        return self._toolbox_request(
+            sandbox_id=sandbox_id,
+            method="GET",
+            path="/work-dir",
+        )
