@@ -113,3 +113,79 @@ class DaytonaHTTPClient:
         GET /sandbox
         """
         return self._request("GET", "/sandbox")
+
+    def create_sandbox(
+        self,
+        name: str,
+        image: str = "debian:12.9",
+        language: str = "python",
+        cpu: int = 1,
+        memory: int = 1,
+        disk: int = 3,
+        auto_stop_interval: int = 10,
+        auto_delete_interval: int = 60,
+    ) -> Dict[str, Any]:
+        """
+        Cria uma sandbox Daytona pequena e descartável a partir de uma imagem Docker pública.
+
+        Importante:
+        - Usamos 'image', não 'snapshot'.
+        - Snapshot exige um snapshot já existente/ativo na conta Daytona.
+        - Com image, a Daytona cria/usa snapshot derivado da imagem.
+
+        Endpoint:
+        POST /sandbox
+        """
+        if not name or not name.strip():
+            raise DaytonaHTTPError("Nome da sandbox não pode estar vazio.")
+
+        payload = {
+            "name": name.strip(),
+            "image": image,
+            "language": language,
+            "resources": {
+                "cpu": cpu,
+                "memory": memory,
+                "disk": disk,
+            },
+            "public": False,
+            "networkBlockAll": False,
+            "autoStopInterval": auto_stop_interval,
+            "autoDeleteInterval": auto_delete_interval,
+            "labels": {
+                "source": "openmanus-local",
+                "purpose": "daytona-http-test",
+            },
+            "envVars": {},
+        }
+
+        return self._request("POST", "/sandbox", json=payload)
+
+
+    def get_sandbox(self, sandbox_id_or_name: str, verbose: bool = False) -> Dict[str, Any]:
+        """
+        Consulta detalhes de uma sandbox.
+
+        Endpoint:
+        GET /sandbox/{sandboxIdOrName}
+        """
+        if not sandbox_id_or_name or not sandbox_id_or_name.strip():
+            raise DaytonaHTTPError("sandbox_id_or_name não pode estar vazio.")
+
+        return self._request(
+            "GET",
+            f"/sandbox/{sandbox_id_or_name.strip()}",
+            params={"verbose": verbose},
+        )
+
+    def delete_sandbox(self, sandbox_id_or_name: str) -> Dict[str, Any]:
+        """
+        Deleta uma sandbox.
+
+        Endpoint:
+        DELETE /sandbox/{sandboxIdOrName}
+        """
+        if not sandbox_id_or_name or not sandbox_id_or_name.strip():
+            raise DaytonaHTTPError("sandbox_id_or_name não pode estar vazio.")
+
+        return self._request("DELETE", f"/sandbox/{sandbox_id_or_name.strip()}")
