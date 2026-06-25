@@ -67,14 +67,6 @@
             "planned",
             "unknown"
           ]
-        },
-        "documentation_refs": {
-          "type": "array",
-          "description": "Sources consulted to build this capability map. May be empty for mock/unknown providers, but validation policy may require refs for active providers.",
-          "items": {
-            "$ref": "#/$defs/DocumentationRef"
-          },
-          "minItems": 0
         }
       }
     },
@@ -86,7 +78,8 @@
         "capability_map_version",
         "capability_map_status",
         "scope",
-        "description"
+        "description",
+        "documentation_refs"
       ],
       "additionalProperties": false,
       "properties": {
@@ -115,6 +108,14 @@
           "type": "string",
           "minLength": 1,
           "description": "Free-text description of this capability map's purpose and scope."
+        },
+        "documentation_refs": {
+          "type": "array",
+          "description": "Sources consulted to build this capability map. May be empty for mock/unknown providers, but validation policy may require refs for active providers.",
+          "items": {
+            "$ref": "#/$defs/DocumentationRef"
+          },
+          "minItems": 0
         }
       }
     },
@@ -536,7 +537,7 @@
     "CapabilityStatus": {
       "type": "object",
       "description": "Describes the support level for a single capability field.",
-      "required": ["status", "field_name", "supported_endpoint_modes", "required_by_provider", "required_by_local_policy", "notes"],
+      "required": ["status", "canonical_field_name", "provider_field_name", "supported_endpoint_modes", "required_by_provider", "required_by_local_policy", "notes"],
       "additionalProperties": false,
       "properties": {
         "status": {
@@ -554,9 +555,13 @@
             "not_exposed"
           ]
         },
-        "field_name": {
+        "canonical_field_name": {
           "type": ["string", "null"],
-          "description": "Name of the field in the provider's API. Null if it maps to no specific field (e.g., flattened into prompt)."
+          "description": "Name of the field in the Normalized Image Request (provider-agnostic canonical schema). Null if the capability has no canonical representation (e.g., provider_options)."
+        },
+        "provider_field_name": {
+          "type": ["string", "null"],
+          "description": "Name of the field in the provider's API. Null if the capability has no direct mapping in the provider API (e.g., flattened into prompt)."
         },
         "supported_endpoint_modes": {
           "type": "array",
@@ -586,6 +591,7 @@
         "method",
         "base_url",
         "path_template",
+        "endpoint_version",
         "request_format",
         "response_format",
         "supported",
@@ -624,6 +630,10 @@
         "path_template": {
           "type": "string",
           "description": "Path template with placeholders. Ex: '/v1/images/generations' or '/image/{prompt}'."
+        },
+        "endpoint_version": {
+          "type": "string",
+          "description": "Version identifier for this endpoint. Ex: 'v1', 'v2', 'beta', 'preview', 'unversioned'."
         },
         "request_format": {
           "type": "string",
@@ -667,6 +677,13 @@
           "enum": ["active", "experimental", "deprecated", "unknown"],
           "description": "Current status of this model."
         },
+        "limitations": {
+          "type": "array",
+          "description": "Model-specific limitations not captured by the supports object. Each item describes a known constraint specific to this model.",
+          "items": {
+            "$ref": "#/$defs/ModelLimitation"
+          }
+        },
         "supports": {
           "type": "object",
           "description": "Capability overrides for this specific model.",
@@ -684,6 +701,27 @@
         "notes": {
           "type": "string",
           "description": "Free-text notes about this model, such as known quirks or deprecation timelines."
+        }
+      }
+    },
+    "ModelLimitation": {
+      "type": "object",
+      "description": "A limitation specific to a particular model, simpler than KnownLimitation.",
+      "required": ["description", "severity", "mitigation"],
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Description of the limitation and its impact."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "mitigation": {
+          "type": "string",
+          "description": "Suggested mitigation strategy for this limitation."
         }
       }
     },

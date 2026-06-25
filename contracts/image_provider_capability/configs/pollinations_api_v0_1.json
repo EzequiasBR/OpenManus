@@ -1,0 +1,803 @@
+{
+  "$schema": "https://github.com/anomalyco/OpenManus/contracts/image_provider_capability/schemas/image_provider_capability_map.schema.json",
+  "schema_version": "0.1.0",
+  "provider": {
+    "provider_id": "pollinations",
+    "provider_name": "Pollinations.ai",
+    "provider_kind": "remote_api",
+    "provider_status": "active"
+  },
+  "capability_map": {
+    "capability_map_id": "pollinations_api_v0_1",
+    "capability_map_version": "0.1.0",
+    "capability_map_status": "reviewed",
+    "scope": "api_real",
+    "description": "Mapeia a API real documentada da Pollinations.ai (APIDOCS.md v0.3.0), incluindo endpoints GET /image/{prompt}, POST /v1/images/generations e POST /v1/images/edits. Não reflete a tool atual do OpenManus (ImageGeneratorTool).",
+    "documentation_refs": [
+      {
+        "label": "APIDOCS.md (raw)",
+        "url": "https://raw.githubusercontent.com/pollinations/pollinations/refs/heads/master/APIDOCS.md",
+        "source_type": "official_docs",
+        "confidence": "high",
+        "checked_at": "2026-06-25T00:00:00Z"
+      },
+      {
+        "label": "GitHub repo",
+        "url": "https://github.com/pollinations/pollinations",
+        "source_type": "official_repo",
+        "confidence": "high",
+        "checked_at": "2026-06-25T00:00:00Z"
+      },
+      {
+        "label": "Pesquisa externa (EXTERNAL_RESEARCH v0.1)",
+        "url": "https://github.com/anomalyco/OpenManus/docs/POLLINATIONS_IMAGE_API_EXTERNAL_RESEARCH_v0_1.md",
+        "source_type": "external_research",
+        "confidence": "medium",
+        "checked_at": "2026-06-25T00:00:00Z"
+      }
+    ]
+  },
+  "endpoint_modes": [
+    {
+      "mode_id": "pollinations_get_image_prompt",
+      "mode_type": "text_to_image_get",
+      "method": "GET",
+      "base_url": "https://gen.pollinations.ai",
+      "path_template": "/image/{prompt}",
+      "endpoint_version": "unversioned",
+      "request_format": "query_params",
+      "response_format": "binary_image",
+      "supported": true,
+      "requires_auth": false,
+      "notes": "Endpoint público GET. Auth pode ser passada via query key, mas o endpoint funciona sem auth dependendo da política do provider. Parâmetros adicionais via query string: width, height, seed, model, safe, transparent."
+    },
+    {
+      "mode_id": "pollinations_post_images_generations",
+      "mode_type": "text_to_image_post_json",
+      "method": "POST",
+      "base_url": "https://gen.pollinations.ai",
+      "path_template": "/v1/images/generations",
+      "endpoint_version": "v1",
+      "request_format": "json_body",
+      "response_format": "json",
+      "supported": true,
+      "requires_auth": true,
+      "notes": "Endpoint OpenAI-compatible. Aceita JSON body com prompt, model, n, size, response_format (url|b64_json), seed, quality, safe. Retorna CreateImageResponse JSON."
+    },
+    {
+      "mode_id": "pollinations_post_images_edits",
+      "mode_type": "image_edit_multipart",
+      "method": "POST",
+      "base_url": "https://gen.pollinations.ai",
+      "path_template": "/v1/images/edits",
+      "endpoint_version": "v1",
+      "request_format": "multipart_form",
+      "response_format": "json",
+      "supported": true,
+      "requires_auth": true,
+      "notes": "Endpoint de edição. Aceita multipart com imagem de entrada e prompt. Mask não documentado explicitamente."
+    }
+  ],
+  "auth": {
+    "supports_auth": true,
+    "auth_modes": ["none", "api_key_query", "bearer_token"],
+    "preferred_auth_mode": "bearer_token",
+    "secret_handling_policy": "env_var"
+  },
+  "input_capabilities": {
+    "prompt": {
+      "status": "supported",
+      "canonical_field_name": "text_prompt",
+      "provider_field_name": "prompt",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations", "pollinations_post_images_edits"],
+      "required_by_provider": true,
+      "required_by_local_policy": true,
+      "notes": "Campo obrigatório em todos os endpoints. GET: prompt vai no path da URL. POST: prompt vai no JSON body."
+    },
+    "negative_prompt": {
+      "status": "not_supported",
+      "canonical_field_name": "negative_constraints",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Não documentado na APIDOCS.md atual. Restrições negativas devem ser achatadas no prompt principal ou registradas em loss_report."
+    },
+    "model": {
+      "status": "conflict",
+      "canonical_field_name": "model_identifier",
+      "provider_field_name": "model",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations", "pollinations_post_images_edits"],
+      "required_by_provider": false,
+      "required_by_local_policy": true,
+      "notes": "Conflito: APIDOCS.md lista model como opcional com default zimage/flux, mas política local exige enviar explicitamente para evitar ambiguidade entre ferramenta atual e API real."
+    },
+    "width": {
+      "status": "supported",
+      "canonical_field_name": "image_width",
+      "provider_field_name": "width",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "GET /image/{prompt} aceita width via query string. POST usa size. Valores comuns: 256–1024."
+    },
+    "height": {
+      "status": "supported",
+      "canonical_field_name": "image_height",
+      "provider_field_name": "height",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "GET /image/{prompt} aceita height via query string. POST usa size. Valores comuns: 256–1024."
+    },
+    "size": {
+      "status": "supported",
+      "canonical_field_name": "image_size",
+      "provider_field_name": "size",
+      "supported_endpoint_modes": ["pollinations_post_images_generations", "pollinations_post_images_edits"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Formato 'WIDTHxHEIGHT'. Usado no POST. GET usa width+height separados."
+    },
+    "seed": {
+      "status": "model_dependent",
+      "canonical_field_name": "generation_seed",
+      "provider_field_name": "seed",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Depende do modelo. Flux, zimage, seedream e klein suportam seed. GPTImage não suporta. -1 para aleatório."
+    },
+    "n": {
+      "status": "supported_limited",
+      "canonical_field_name": "image_count",
+      "provider_field_name": "n",
+      "supported_endpoint_modes": ["pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Documentado no POST mas limitado a 1. Multi-image não suportado (range 1…1)."
+    },
+    "quality": {
+      "status": "model_dependent",
+      "canonical_field_name": "quality_level",
+      "provider_field_name": "quality",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Aceito nos endpoints GET e POST. Só gptimage responde a quality. Flux e zimage ignoram o campo."
+    },
+    "response_format": {
+      "status": "supported",
+      "canonical_field_name": "output_format",
+      "provider_field_name": "response_format",
+      "supported_endpoint_modes": ["pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "POST aceita 'url' ou 'b64_json'. GET sempre retorna binário."
+    },
+    "user": {
+      "status": "supported",
+      "canonical_field_name": "user_identifier",
+      "provider_field_name": "user",
+      "supported_endpoint_modes": ["pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Campo opcional para identificação do usuário no POST."
+    },
+    "reference_image": {
+      "status": "model_dependent",
+      "canonical_field_name": "reference_image",
+      "provider_field_name": "image",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations", "pollinations_post_images_edits"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Imagem de referência. GET e POST aceitam image como URL ou multipart (edits). Depende do modelo: kontext suporta image como referência visual."
+    },
+    "mask": {
+      "status": "not_documented",
+      "canonical_field_name": "inpainting_mask",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Endpoint /v1/images/edits existe, mas mask (máscara para inpainting) não está documentado na APIDOCS.md atual."
+    },
+    "safe": {
+      "status": "supported",
+      "canonical_field_name": "content_safety",
+      "provider_field_name": "safe",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Filtro de conteúdo. Aceito via query string (GET) e JSON body (POST). Comportamento exato não documentado."
+    },
+    "steps": {
+      "status": "not_exposed",
+      "canonical_field_name": "inference_steps",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Não exposto na API. A API real não aceita steps como parâmetro público."
+    },
+    "guidance": {
+      "status": "not_documented",
+      "canonical_field_name": "guidance_scale",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Não documentado na APIDOCS.md atual. Guidance scale não é parâmetro público da API."
+    },
+    "transparent_background": {
+      "status": "model_dependent",
+      "canonical_field_name": "transparent_background",
+      "provider_field_name": "transparent",
+      "supported_endpoint_modes": ["pollinations_get_image_prompt"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Só gptimage suporta transparent=true via query string no GET. Outros modelos ignoram."
+    },
+    "metadata_request": {
+      "status": "supported_limited",
+      "canonical_field_name": "request_metadata",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "POST retorna structured response (CreateImageResponse JSON) com metadados parciais. Metadados completos de geração (seed_used, model_used) não são garantidos."
+    },
+    "provider_options": {
+      "status": "supported_limited",
+      "canonical_field_name": null,
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Reservado para opções específicas do provider após revisão da formatting policy. Exemplos: nologo (não documentado na APIDOCS.md atual)."
+    }
+  },
+  "output_capabilities": {
+    "binary_image": {
+      "status": "supported",
+      "canonical_field_name": "binary_image",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["pollinations_get_image_prompt"],
+      "required_by_provider": true,
+      "required_by_local_policy": false,
+      "notes": "GET retorna bytes da imagem diretamente (Content-Type image/...)."
+    },
+    "remote_url": {
+      "status": "supported",
+      "canonical_field_name": "image_url",
+      "provider_field_name": "url",
+      "supported_endpoint_modes": ["pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "POST com response_format 'url' retorna URL pública no JSON."
+    },
+    "b64_json": {
+      "status": "supported",
+      "canonical_field_name": "base64_image",
+      "provider_field_name": "b64_json",
+      "supported_endpoint_modes": ["pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "POST com response_format 'b64_json' retorna base64 no JSON."
+    },
+    "local_path": {
+      "status": "not_supported",
+      "canonical_field_name": "local_file_path",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Salvamento local é responsabilidade do cliente/tool, não da API."
+    },
+    "mime_type": {
+      "status": "supported_limited",
+      "canonical_field_name": "mime_type",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["pollinations_get_image_prompt"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "GET retorna Content-Type no header HTTP. POST não expõe mime type no JSON."
+    },
+    "width_height_metadata": {
+      "status": "not_confirmed",
+      "canonical_field_name": "image_dimensions",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Não confirmado se a API retorna width/height da imagem gerada. Pode ser extraído dos bytes localmente."
+    },
+    "seed_used": {
+      "status": "not_confirmed",
+      "canonical_field_name": "actual_seed",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Não confirmado se a API retorna o seed efetivamente usado na geração."
+    },
+    "model_used": {
+      "status": "not_confirmed",
+      "canonical_field_name": "actual_model",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Não confirmado se a API retorna o modelo efetivamente usado na geração."
+    },
+    "prompt_echo": {
+      "status": "not_confirmed",
+      "canonical_field_name": "echoed_prompt",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Não confirmado se a API ecoa o prompt enviado na resposta."
+    },
+    "revised_prompt": {
+      "status": "not_confirmed",
+      "canonical_field_name": "revised_prompt",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Não confirmado se a API revisa o prompt (ex: DALL-E 3 revised_prompt)."
+    },
+    "structured_response": {
+      "status": "supported",
+      "canonical_field_name": "structured_response",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["pollinations_post_images_generations", "pollinations_post_images_edits"],
+      "required_by_provider": true,
+      "required_by_local_policy": false,
+      "notes": "POST retorna CreateImageResponse JSON estruturado (OpenAI-compatible) com array de objetos contendo url ou b64_json."
+    },
+    "generation_metadata_response": {
+      "status": "supported_limited",
+      "canonical_field_name": "generation_metadata",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["pollinations_post_images_generations"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "POST retorna estrutura JSON, mas metadados como seed_used, model_used, revised_prompt não estão confirmados. O JSON contém apenas created (timestamp) e data[] com url/b64_json."
+    },
+    "error_json": {
+      "status": "supported_limited",
+      "canonical_field_name": "error_response",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["pollinations_post_images_generations", "pollinations_post_images_edits"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "POST retorna erro JSON (OpenAI-compatible) em caso de falha. GET retorna erro HTTP sem corpo JSON estruturado."
+    }
+  },
+  "limits": {
+    "max_prompt_chars": 32000,
+    "max_prompt_chars_scope": "post_only",
+    "max_images_per_request": 1,
+    "supported_widths": [],
+    "supported_heights": [],
+    "supported_sizes": [],
+    "rate_limit_policy": "unknown",
+    "payload_size_limit_mb": null,
+    "timeout_seconds_recommended": 120
+  },
+  "model_capabilities": [
+    {
+      "model_id": "zimage",
+      "model_name": "Z-Image (default)",
+      "status": "active",
+      "limitations": [
+        {
+          "description": "Z-Image não responde ao campo quality. Quality é silenciosamente ignorado.",
+          "severity": "low",
+          "mitigation": "Não enviar quality quando model=zimage. Registrar loss_report se quality foi solicitado."
+        }
+      ],
+      "supports": {
+        "seed": {
+          "status": "supported",
+          "canonical_field_name": "generation_seed",
+          "provider_field_name": "seed",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "zimage suporta seed explicitamente."
+        },
+        "quality": {
+          "status": "not_documented",
+          "canonical_field_name": "quality_level",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "zimage não responde a quality. Campo ignorado."
+        },
+        "reference_image": {
+          "status": "not_confirmed",
+          "canonical_field_name": "reference_image",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não confirmado se zimage aceita image como referência."
+        },
+        "image_edit": {
+          "status": "not_documented",
+          "canonical_field_name": null,
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não documentado para zimage."
+        },
+        "transparent_background": {
+          "status": "not_documented",
+          "canonical_field_name": "transparent_background",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "zimage não suporta transparent."
+        },
+        "safe": {
+          "status": "supported",
+          "canonical_field_name": "content_safety",
+          "provider_field_name": "safe",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "safe funciona com zimage."
+        }
+      },
+      "notes": "Modelo default da API Pollinations. Boa cobertura geral."
+    },
+    {
+      "model_id": "flux",
+      "model_name": "Flux (Black Forest Labs)",
+      "status": "active",
+      "limitations": [
+        {
+          "description": "Flux não responde ao campo quality. Quality é silenciosamente ignorado.",
+          "severity": "low",
+          "mitigation": "Não enviar quality quando model=flux. Registrar loss_report se quality foi solicitado."
+        }
+      ],
+      "supports": {
+        "seed": {
+          "status": "supported",
+          "canonical_field_name": "generation_seed",
+          "provider_field_name": "seed",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Flux suporta seed explicitamente."
+        },
+        "quality": {
+          "status": "not_documented",
+          "canonical_field_name": "quality_level",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Flux não responde a quality. Campo ignorado."
+        },
+        "reference_image": {
+          "status": "not_confirmed",
+          "canonical_field_name": "reference_image",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não confirmado se flux aceita image como referência."
+        },
+        "image_edit": {
+          "status": "not_documented",
+          "canonical_field_name": null,
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não documentado para flux."
+        },
+        "transparent_background": {
+          "status": "not_documented",
+          "canonical_field_name": "transparent_background",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Flux não suporta transparent."
+        },
+        "safe": {
+          "status": "supported",
+          "canonical_field_name": "content_safety",
+          "provider_field_name": "safe",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "safe funciona com flux."
+        }
+      },
+      "notes": "Modelo popular da Black Forest Labs. Boa qualidade de imagem."
+    },
+    {
+      "model_id": "seedream",
+      "model_name": "SeaDREAM",
+      "status": "active",
+      "limitations": [],
+      "supports": {
+        "seed": {
+          "status": "supported",
+          "canonical_field_name": "generation_seed",
+          "provider_field_name": "seed",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Seedream suporta seed explicitamente."
+        },
+        "quality": {
+          "status": "not_documented",
+          "canonical_field_name": "quality_level",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não documentado para seedream."
+        },
+        "reference_image": {
+          "status": "not_confirmed",
+          "canonical_field_name": "reference_image",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não confirmado se seedream aceita image como referência."
+        },
+        "image_edit": {
+          "status": "not_documented",
+          "canonical_field_name": null,
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não documentado para seedream."
+        },
+        "transparent_background": {
+          "status": "not_documented",
+          "canonical_field_name": "transparent_background",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não documentado para seedream."
+        },
+        "safe": {
+          "status": "supported",
+          "canonical_field_name": "content_safety",
+          "provider_field_name": "safe",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "safe funciona com seedream."
+        }
+      },
+      "notes": "Modelo para geração de imagens oníricas/abstratas."
+    },
+    {
+      "model_id": "gptimage",
+      "model_name": "GPT-Image (OpenAI)",
+      "status": "active",
+      "limitations": [
+        {
+          "description": "GPT-Image não suporta seed. O parâmetro seed é silenciosamente ignorado.",
+          "severity": "low",
+          "mitigation": "Não enviar seed quando model=gptimage. Registrar loss_report se seed foi solicitado."
+        }
+      ],
+      "supports": {
+        "seed": {
+          "status": "not_supported",
+          "canonical_field_name": "generation_seed",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "GPTImage não suporta seed."
+        },
+        "quality": {
+          "status": "model_dependent",
+          "canonical_field_name": "quality_level",
+          "provider_field_name": "quality",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "GPTImage responde a quality. É o único modelo que faz uso efetivo do campo."
+        },
+        "reference_image": {
+          "status": "not_confirmed",
+          "canonical_field_name": "reference_image",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não confirmado como GPTImage trata image como referência."
+        },
+        "image_edit": {
+          "status": "not_documented",
+          "canonical_field_name": null,
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não documentado para gptimage."
+        },
+        "transparent_background": {
+          "status": "model_dependent",
+          "canonical_field_name": "transparent_background",
+          "provider_field_name": "transparent",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "GPTImage suporta transparent=true via query string no GET. É o único modelo com este suporte."
+        },
+        "safe": {
+          "status": "supported",
+          "canonical_field_name": "content_safety",
+          "provider_field_name": "safe",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "safe funciona com gptimage."
+        }
+      },
+      "notes": "Modelo baseado em GPT. Único que suporta quality e transparent_background."
+    },
+    {
+      "model_id": "kontext",
+      "model_name": "Kontext (IMG2IMG)",
+      "status": "active",
+      "limitations": [
+        {
+          "description": "Kontext é especializado em IMG2IMG. Pode não funcionar bem para geração puramente textual sem image de referência.",
+          "severity": "medium",
+          "mitigation": "Usar kontext apenas quando reference_image estiver presente. Para geração sem referência, preferir flux ou zimage."
+        }
+      ],
+      "supports": {
+        "seed": {
+          "status": "not_confirmed",
+          "canonical_field_name": "generation_seed",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não confirmado se kontext suporta seed."
+        },
+        "quality": {
+          "status": "not_documented",
+          "canonical_field_name": "quality_level",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não documentado para kontext."
+        },
+        "reference_image": {
+          "status": "supported_limited",
+          "canonical_field_name": "reference_image",
+          "provider_field_name": "image",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Kontext é modelo IMG2IMG. Especializado em usar image como referência visual. Suporta image via GET e POST."
+        },
+        "image_edit": {
+          "status": "supported_limited",
+          "canonical_field_name": null,
+          "provider_field_name": null,
+          "supported_endpoint_modes": ["pollinations_post_images_edits"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Kontext pode ser usado com edits devido à natureza IMG2IMG, mas não está explicitamente documentado."
+        },
+        "transparent_background": {
+          "status": "not_documented",
+          "canonical_field_name": "transparent_background",
+          "provider_field_name": null,
+          "supported_endpoint_modes": [],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "Não documentado para kontext."
+        },
+        "safe": {
+          "status": "supported",
+          "canonical_field_name": "content_safety",
+          "provider_field_name": "safe",
+          "supported_endpoint_modes": ["pollinations_get_image_prompt", "pollinations_post_images_generations"],
+          "required_by_provider": false,
+          "required_by_local_policy": false,
+          "notes": "safe funciona com kontext."
+        }
+      },
+      "notes": "Modelo IMG2IMG (image-to-image). Especializado em usar imagem de referência para guiar a geração."
+    }
+  ],
+  "unsupported_fields_policy": {
+    "on_unsupported_noncritical": "flatten_to_prompt",
+    "on_unsupported_critical": "flatten_to_prompt_with_loss_report",
+    "on_conflict": "prefer_local_policy",
+    "loss_report_required": true
+  },
+  "versioning": {
+    "adapter_contract_version": "0.1.0",
+    "capability_map_version": "0.1.0",
+    "formatting_policy_version": "0.1.0",
+    "provider_api_version": null,
+    "last_reviewed_at": "2026-06-25T00:00:00Z"
+  },
+  "compatibility": {
+    "compatible_with_adapter_contract_versions": ["0.1.0"],
+    "compatible_with_formatting_policy_versions": ["0.1.0"],
+    "requires_provider_request_packet": true,
+    "requires_fidelity_gate": true,
+    "requires_loss_report": true
+  },
+  "validation_policy": {
+    "offline_validation_required": true,
+    "runtime_validation_required": true,
+    "forbid_unknown_required_fields": true,
+    "forbid_silent_drop_of_critical_fields": true,
+    "require_documentation_refs": true,
+    "require_version_identifiers": true
+  },
+  "known_limitations": [
+    {
+      "limitation_id": "negative_prompt_absent",
+      "severity": "medium",
+      "description": "A API Pollinations.ai não possui campo negative_prompt. Restrições negativas devem ser inseridas no prompt principal, o que reduz a precisão semântica.",
+      "affected_capabilities": ["negative_prompt"],
+      "mitigation": "Aplicar flatten_to_prompt via formatting policy. Registrar perda em loss_report para que o Fidelity Gate possa alertar o usuário."
+    },
+    {
+      "limitation_id": "model_required_by_local_policy",
+      "severity": "medium",
+      "description": "A documentação indica que model é opcional (default zimage/flux), mas política local exige envio explícito para evitar ambiguidade entre a tool atual (que não envia model) e a API real (que suporta múltiplos modelos).",
+      "affected_capabilities": ["model"],
+      "mitigation": "Política local: 'prefer_local_policy' em caso de conflito. A LLM Formatting Layer deve sempre incluir model no payload normalizado."
+    },
+    {
+      "limitation_id": "n_limited_to_one",
+      "severity": "low",
+      "description": "O campo n é aceito no POST mas limitado a 1. Não é possível gerar múltiplas imagens por requisição na API Pollinations.",
+      "affected_capabilities": ["n"],
+      "mitigation": "Documentar como supported_limited. Se múltiplas imagens forem necessárias, o sistema deve fazer várias requisições."
+    },
+    {
+      "limitation_id": "mask_not_documented",
+      "severity": "high",
+      "description": "O endpoint /v1/images/edits existe, mas o campo mask (máscara para inpainting) não está documentado na APIDOCS.md. Inpainting com máscara personalizada pode não ser suportado.",
+      "affected_capabilities": ["mask", "reference_image"],
+      "mitigation": "Não enviar mask. Usar apenas image + prompt para edits. Registrar em loss_report se mask for solicitada."
+    },
+    {
+      "limitation_id": "generation_metadata_incomplete",
+      "severity": "medium",
+      "description": "Metadados completos de geração (seed_used, model_used, revised_prompt, width, height) não são garantidos na resposta da API POST.",
+      "affected_capabilities": ["metadata_request", "seed_used", "model_used", "revised_prompt", "width_height_metadata"],
+      "mitigation": "Extração de metadados deve ser considerada best-effort. O NormalizedImageResult deve preencher campos como null quando não disponíveis."
+    },
+    {
+      "limitation_id": "get_prompt_url_limit",
+      "severity": "low",
+      "description": "O endpoint GET /image/{prompt} coloca o prompt no path da URL, o que tem limite prático de tamanho de URL HTTP (tipicamente ~2000-8000 caracteres dependendo do cliente/servidor).",
+      "affected_capabilities": ["prompt"],
+      "mitigation": "Usar POST para prompts longos (>1000 caracteres). O capability map registra max_prompt_chars como 32000 com scope post_only."
+    }
+  ]
+}

@@ -1,0 +1,372 @@
+{
+  "$schema": "https://github.com/anomalyco/OpenManus/contracts/image_provider_capability/schemas/image_provider_capability_map.schema.json",
+  "schema_version": "0.1.0",
+  "provider": {
+    "provider_id": "mock_image_provider",
+    "provider_name": "Mock Image Provider (exemplo didático)",
+    "provider_kind": "mock",
+    "provider_status": "experimental"
+  },
+  "capability_map": {
+    "capability_map_id": "mock_provider_example_v0_1",
+    "capability_map_version": "0.1.0",
+    "capability_map_status": "draft",
+    "scope": "mock",
+    "description": "Exemplo didático de capability map para um provider mock. Usado para demonstrar a estrutura do schema sem depender de APIs reais.",
+    "documentation_refs": []
+  },
+  "endpoint_modes": [
+    {
+      "mode_id": "mock_text_to_image_json",
+      "mode_type": "text_to_image_post_json",
+      "method": "POST",
+      "base_url": "https://mock-image-api.example.com",
+      "path_template": "/v1/images/generations",
+      "endpoint_version": "v1",
+      "request_format": "json_body",
+      "response_format": "json",
+      "supported": true,
+      "requires_auth": false,
+      "notes": "Endpoint mock que aceita JSON e retorna JSON. Não requer autenticação."
+    }
+  ],
+  "auth": {
+    "supports_auth": false,
+    "auth_modes": ["none"],
+    "preferred_auth_mode": "none",
+    "secret_handling_policy": "none"
+  },
+  "input_capabilities": {
+    "prompt": {
+      "status": "supported",
+      "canonical_field_name": "text_prompt",
+      "provider_field_name": "prompt",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": true,
+      "required_by_local_policy": true,
+      "notes": "Campo obrigatório em todos os endpoints do provider mock."
+    },
+    "negative_prompt": {
+      "status": "not_supported",
+      "canonical_field_name": "negative_constraints",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não suporta negative_prompt."
+    },
+    "model": {
+      "status": "supported",
+      "canonical_field_name": "model_identifier",
+      "provider_field_name": "model",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": true,
+      "notes": "Campo suportado. Política local exige envio explícito."
+    },
+    "width": {
+      "status": "not_supported",
+      "canonical_field_name": "image_width",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não suporta width/height separados. Usar size."
+    },
+    "height": {
+      "status": "not_supported",
+      "canonical_field_name": "image_height",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não suporta width/height separados. Usar size."
+    },
+    "size": {
+      "status": "supported",
+      "canonical_field_name": "image_size",
+      "provider_field_name": "size",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Formato 'WIDTHxHEIGHT'. Ex: '1024x1024'."
+    },
+    "seed": {
+      "status": "supported",
+      "canonical_field_name": "generation_seed",
+      "provider_field_name": "seed",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Seed para reprodutibilidade. -1 para aleatório."
+    },
+    "n": {
+      "status": "supported_limited",
+      "canonical_field_name": "image_count",
+      "provider_field_name": "n",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Limitado a 4 imagens por requisição no provider mock."
+    },
+    "quality": {
+      "status": "supported",
+      "canonical_field_name": "quality_level",
+      "provider_field_name": "quality",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Valores: low, medium, high, hd, standard."
+    },
+    "response_format": {
+      "status": "supported",
+      "canonical_field_name": "output_format",
+      "provider_field_name": "response_format",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Suporta 'url' e 'b64_json'."
+    },
+    "user": {
+      "status": "supported",
+      "canonical_field_name": "user_identifier",
+      "provider_field_name": "user",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Identificador opcional do usuário."
+    },
+    "reference_image": {
+      "status": "not_supported",
+      "canonical_field_name": "reference_image",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não suporta image-to-image ou edição."
+    },
+    "mask": {
+      "status": "not_supported",
+      "canonical_field_name": "inpainting_mask",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não suporta inpainting ou edição com máscara."
+    },
+    "safe": {
+      "status": "supported",
+      "canonical_field_name": "content_safety",
+      "provider_field_name": "safe",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Filtro de conteúdo booleano."
+    },
+    "steps": {
+      "status": "not_supported",
+      "canonical_field_name": "inference_steps",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não expõe steps como parâmetro público."
+    },
+    "guidance": {
+      "status": "not_supported",
+      "canonical_field_name": "guidance_scale",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não expõe guidance como parâmetro público."
+    },
+    "transparent_background": {
+      "status": "not_supported",
+      "canonical_field_name": "transparent_background",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não suporta fundo transparente."
+    },
+    "metadata_request": {
+      "status": "supported",
+      "canonical_field_name": "request_metadata",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock retorna metadados completos na resposta JSON."
+    },
+    "provider_options": {
+      "status": "not_supported",
+      "canonical_field_name": null,
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não tem opções específicas."
+    }
+  },
+  "output_capabilities": {
+    "binary_image": {
+      "status": "not_supported",
+      "canonical_field_name": "binary_image",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock só retorna JSON, não binário."
+    },
+    "remote_url": {
+      "status": "supported",
+      "canonical_field_name": "image_url",
+      "provider_field_name": "url",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "POST retorna URL pública no JSON."
+    },
+    "b64_json": {
+      "status": "supported",
+      "canonical_field_name": "base64_image",
+      "provider_field_name": "b64_json",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "POST retorna base64 no JSON."
+    },
+    "local_path": {
+      "status": "not_supported",
+      "canonical_field_name": "local_file_path",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Salvamento local é responsabilidade do cliente."
+    },
+    "mime_type": {
+      "status": "not_confirmed",
+      "canonical_field_name": "mime_type",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não expõe mime type."
+    },
+    "width_height_metadata": {
+      "status": "supported",
+      "canonical_field_name": "image_dimensions",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock retorna width/height no JSON."
+    },
+    "seed_used": {
+      "status": "supported",
+      "canonical_field_name": "actual_seed",
+      "provider_field_name": "seed_used",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock retorna o seed efetivamente usado."
+    },
+    "model_used": {
+      "status": "supported",
+      "canonical_field_name": "actual_model",
+      "provider_field_name": "model_used",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock retorna o modelo usado."
+    },
+    "prompt_echo": {
+      "status": "supported",
+      "canonical_field_name": "echoed_prompt",
+      "provider_field_name": "prompt_echo",
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock ecoa o prompt enviado."
+    },
+    "revised_prompt": {
+      "status": "not_confirmed",
+      "canonical_field_name": "revised_prompt",
+      "provider_field_name": null,
+      "supported_endpoint_modes": [],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock não revisa o prompt."
+    },
+    "structured_response": {
+      "status": "supported",
+      "canonical_field_name": "structured_response",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": true,
+      "required_by_local_policy": false,
+      "notes": "POST retorna JSON estruturado com array de resultados."
+    },
+    "generation_metadata_response": {
+      "status": "supported",
+      "canonical_field_name": "generation_metadata",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock retorna metadados completos de geração."
+    },
+    "error_json": {
+      "status": "supported",
+      "canonical_field_name": "error_response",
+      "provider_field_name": null,
+      "supported_endpoint_modes": ["mock_text_to_image_json"],
+      "required_by_provider": false,
+      "required_by_local_policy": false,
+      "notes": "Provider mock retorna erro JSON em caso de falha."
+    }
+  },
+  "limits": {
+    "max_prompt_chars": 4000,
+    "max_prompt_chars_scope": "all_endpoints",
+    "max_images_per_request": 4,
+    "supported_widths": [256, 512, 1024],
+    "supported_heights": [256, 512, 1024],
+    "supported_sizes": ["256x256", "512x512", "1024x1024"],
+    "rate_limit_policy": "documented",
+    "payload_size_limit_mb": 10,
+    "timeout_seconds_recommended": 60
+  },
+  "model_capabilities": [],
+  "unsupported_fields_policy": {
+    "on_unsupported_noncritical": "drop_with_warning",
+    "on_unsupported_critical": "block",
+    "on_conflict": "prefer_documentation",
+    "loss_report_required": true
+  },
+  "versioning": {
+    "adapter_contract_version": "0.1.0",
+    "capability_map_version": "0.1.0",
+    "formatting_policy_version": "0.1.0",
+    "provider_api_version": null,
+    "last_reviewed_at": "2026-06-25T00:00:00Z"
+  },
+  "compatibility": {
+    "compatible_with_adapter_contract_versions": ["0.1.0"],
+    "compatible_with_formatting_policy_versions": ["0.1.0"],
+    "requires_provider_request_packet": true,
+    "requires_fidelity_gate": true,
+    "requires_loss_report": true
+  },
+  "validation_policy": {
+    "offline_validation_required": true,
+    "runtime_validation_required": true,
+    "forbid_unknown_required_fields": true,
+    "forbid_silent_drop_of_critical_fields": true,
+    "require_documentation_refs": false,
+    "require_version_identifiers": true
+  },
+  "known_limitations": []
+}
