@@ -783,7 +783,38 @@ Escopo sugerido: schema de Action Payload, contratos de adapter, validação mí
 
 ---
 
-## 22. Apêndice A — Mapa Visual de Dependências entre Módulos
+## 22. Backlog Arquitetural Pós-Limpeza
+
+> **Status:** Nenhum documento foi criado ainda. Apenas itens de backlog identificados.
+>
+> **Regra:** Nenhum destes documentos deve ser criado antes da conclusão das Fases 0–4 (limpeza estrutural) ou antes da validação do contrato Skill Adapter (Fase 5).
+
+### 22.1 Documentos Futuros Identificados
+
+| Documento | Escopo | Depende de |
+|-----------|--------|------------|
+| `USER_CONFIGURABLE_SKILLS_AND_PROVIDER_REGISTRY_v0_1.md` | Registry de skills, providers e tools configurável pelo usuário | Fase 5 (Skill Adapter), Fase 6 (GraphStore) |
+| `SKILL_ADAPTER_AND_API_EXECUTION_CONTRACT_v0_1.md` | Contrato da camada Skill Adapter | Fase 4 (simplificação concluída) |
+
+### 22.2 Capacidades Futuras (Não Implementadas)
+
+| Capacidade | Descrição | Prioridade |
+|------------|-----------|------------|
+| **Registry de skills** | Interface para adicionar/remover/ativar/desativar skills sem editar código | Pós Fase 5 |
+| **Troca de providers em runtime** | Trocar provedores de IA e tools sem modificar backend | Pós Fase 5 |
+| **Registry seguro** | Skills, providers e tools registrados com validação de compatibilidade | Pós Fase 6 |
+| **Validação pré-ativação** | Verificar compatibilidade entre skill, provider e tool antes de ativar | Pós Fase 6 |
+| **Separação config vs código** | Configuração do usuário isolada do código-fonte do projeto | Pós Fase 4 |
+
+### 22.3 Relação com a Limpeza Atual
+
+- Nenhum dos itens acima **bloqueia** a limpeza das Fases 1–4.
+- A limpeza deve preservar os módulos base identificados na seção 18.4.
+- A criação destes documentos e capacidades deve ocorrer **após** a estabilização do fork, não antes.
+
+---
+
+## 23. Apêndice A — Mapa Visual de Dependências entre Módulos
 
 ```
 main.py
