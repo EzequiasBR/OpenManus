@@ -31,11 +31,12 @@ OpenManus/
 │   ├── integrations/           # Integrações externas leves (HTTP direto)
 │   ├── mcp/                    # Servidor MCP do OpenManus
 │   └── utils/                  # Utilitários
+├── archive/                   # Código arquivado (A2A, etc.)
+│   └── openmanus/
+│       └── a2a_protocol_unvalidated/  # A2A — DEFER_FUTURE, sem contrato funcional
 ├── config/                     # Arquivos de configuração TOML
 ├── docs/                       # Documentação local
 ├── examples/                   # Exemplos de uso e benchmarks
-├── protocol/                   # Implementação do protocolo A2A
-│   └── a2a/                    # Agent-to-Agent (Google A2A)
 ├── scripts/                    # Scripts de teste/diagnóstico (Daytona)
 ├── tests/                      # Testes unitários (sandbox Docker)
 ├── .pre-commit-config.yaml
@@ -60,7 +61,7 @@ OpenManus/
 - **Scripts de diagnóstico** (`scripts/`): 10 arquivos focados em testes Daytona, mantidos separados do código principal.
 - **Testes unitários** (`tests/`): apenas 4 arquivos, todos cobrindo a sandbox Docker local. Não há testes para agents, tools, flows ou integrações HTTP.
 - **Docs** (`docs/`): apenas 2 arquivos criados localmente (PROJECT_STATUS.md e contrato Daytona).
-- **Protocolo A2A** (`protocol/a2a/`): implementação experimental separada, com seu próprio README e entry points.
+- **Protocolo A2A** (`archive/openmanus/a2a_protocol_unvalidated/`): implementação experimental arquivada por ser **DEFER_FUTURE** — sem contrato funcional, sem testes, sem integração. O diretório `protocol/a2a/` original foi removido.
 - **`app/daytona/`**: implementação original baseada no SDK Daytona. **Não está em uso.** A adaptação local substituiu pelo HTTP direto em `app/integrations/` + `app/tool/daytona_sandbox.py`.
 
 ---
@@ -283,16 +284,20 @@ Não há diretório `schemas/` separado. Os schemas de dados estão centralizado
 | `examples/use_case/japan-travel-plan/japan_travel_handbook_mobile.html` | HTML | Guia de viagem gerado (Mobile) | Original |
 | `examples/use_case/japan-travel-plan/japan_travel_handbook_print.html` | HTML | Guia de viagem gerado (Print) | Original |
 
-### 2.16 Protocolo A2A
+### 2.16 Protocolo A2A — Arquivado
 
-| Caminho | Tipo | Função aparente | Origem | Observações |
+O protocolo A2A foi movido para `archive/openmanus/a2a_protocol_unvalidated/` por ser **DEFER_FUTURE**: sem contrato funcional, sem testes, sem integração com o entry point principal.
+
+| Caminho (no archive) | Tipo | Função aparente | Origem | Observações |
 |---|---|---|---|---|
-| `protocol/a2a/__init__.py` | Python | Vazio | Original | |
-| `protocol/a2a/app/__init__.py` | Python | Vazio | Original | |
-| `protocol/a2a/app/main.py` | Python | Servidor A2A (Starlette + uvicorn) | Original | 131 linhas |
-| `protocol/a2a/app/agent.py` | Python | `A2AManus` — wrapper Manus para A2A | Original | 32 linhas |
-| `protocol/a2a/app/agent_executor.py` | Python | `ManusExecutor` — executor A2A | Original | 72 linhas |
-| `protocol/a2a/app/README.md` | Markdown | Guia de setup e exemplos curl | Original | 194 linhas |
+| `archive/openmanus/a2a_protocol_unvalidated/a2a/__init__.py` | Python | Vazio | Original | |
+| `archive/openmanus/a2a_protocol_unvalidated/a2a/app/__init__.py` | Python | Vazio | Original | |
+| `archive/openmanus/a2a_protocol_unvalidated/a2a/app/main.py` | Python | Servidor A2A (Starlette + uvicorn) | Original | 131 linhas |
+| `archive/openmanus/a2a_protocol_unvalidated/a2a/app/agent.py` | Python | `A2AManus` — wrapper Manus para A2A | Original | 32 linhas |
+| `archive/openmanus/a2a_protocol_unvalidated/a2a/app/agent_executor.py` | Python | `ManusExecutor` — executor A2A | Original | 72 linhas |
+| `archive/openmanus/a2a_protocol_unvalidated/a2a/app/README.md` | Markdown | Guia de setup e exemplos curl | Original | 194 linhas |
+
+O diretório `protocol/a2a/` original foi removido.
 
 ### 2.17 CI/CD
 
@@ -412,7 +417,7 @@ Além disso, o Manus conecta-se dinamicamente a servidores MCP configurados (via
 | `docs/PROJECT_STATUS.md` | Estado da adaptação local, integrações validadas, variáveis de ambiente, regras de estabilidade |
 | `docs/DAYTONA_SANDBOX_TOOL_CONTRACT_v0_2_1.md` | Contrato formal da DaytonaSandboxTool: parâmetros, respostas, cleanup, isolamento, testes aprovados |
 | `app/daytona/README.md` | Instruções originais para usar sandbox Daytona via SDK (não aplicável à configuração atual) |
-| `protocol/a2a/app/README.md` | Guia do protocolo A2A |
+| `archive/openmanus/a2a_protocol_unvalidated/a2a/app/README.md` | Guia do protocolo A2A (arquivado) |
 
 ---
 

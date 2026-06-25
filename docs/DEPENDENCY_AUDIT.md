@@ -28,7 +28,7 @@ O projeto declara 42 dependências em `requirements.txt` e 15 em `setup.py`. A a
 
 ### Dependências opcionais (por funcionalidade)
 
-`boto3` (Bedrock), `docker` (sandbox local), `crawl4ai` (crawling), `browser-use` + `playwright` (automação de navegador), `uvicorn` + `fastapi` (A2A server), `googlesearch-python`, `baidusearch`, `duckduckgo_search` (buscadores específicos)
+`boto3` (Bedrock), `docker` (sandbox local), `crawl4ai` (crawling), `browser-use` + `playwright` (automação de navegador), `uvicorn` + `fastapi` (A2A server — arquivado, DEFER_FUTURE, sem contrato funcional), `googlesearch-python`, `baidusearch`, `duckduckgo_search` (buscadores específicos)
 
 ### Dependências problemáticas
 
@@ -98,7 +98,7 @@ Todas as 42 dependências de `requirements.txt` foram instaladas via `pip instal
 
 | Pacote | Versão | Função |
 |---|---|---|
-| `fastapi` | `~=0.115.11` | Servidor A2A (transitivo) |
+| `fastapi` | `~=0.115.11` | Servidor A2A (transitivo, arquivado, DEFER_FUTURE) |
 | `tiktoken` | `~=0.9.0` | Token counting (LLM) |
 | `baidusearch` | `~=1.0.3` | Buscador Baidu |
 | `duckduckgo_search` | `~=7.5.3` | Buscador DuckDuckGo |
@@ -155,7 +155,7 @@ A principal diferença é que `requirements.txt` contém 24 pacotes que `setup.p
 | `tenacity` | `app/llm.py`, `app/tool/web_search.py` | Médio |
 | `loguru` | `app/logger.py` | Crítico |
 | `tiktoken` | `app/llm.py` | Alto |
-| `httpx` | `app/integrations/daytona_http.py`, `app/tool/image_generator.py`, `protocol/a2a/app/main.py`, scripts | Alto |
+| `httpx` | `app/integrations/daytona_http.py`, `app/tool/image_generator.py`, `archive/openmanus/a2a_protocol_unvalidated/a2a/app/main.py`, scripts | Alto |
 | `tomli` | Backport de `tomllib` (stdlib Python ≥3.11) | Baixo |
 | `pyyaml` | **Sem import direto confirmado nesta auditoria** | Requer investigação |
 | `setuptools` | Apenas `setup.py` | Build-only |
@@ -216,13 +216,13 @@ A principal diferença é que `requirements.txt` contém 24 pacotes que `setup.p
 
 **Observação**: `WebSearch` usa múltiplos motores com fallback. Se um motor não estiver instalado, o WebSearch tenta o próximo.
 
-### 4.8 MCP / A2A
+### 4.8 MCP
 
 | Pacote | Importado em | Obrigatória? |
 |---|---|---|
 | `mcp` | `app/mcp/server.py`, `app/tool/mcp.py` | Sim (MCP client + server) |
-| `fastapi` | Transitiva via A2A | Não (só A2A server) |
-| `uvicorn` | `protocol/a2a/app/main.py` (dentro de função) | Não (só A2A server) |
+
+**Nota:** O protocolo A2A foi movido para `archive/openmanus/a2a_protocol_unvalidated/` por ser **DEFER_FUTURE** — sem contrato funcional, sem testes, sem integração com o entry point principal. Suas dependências (`fastapi`, `uvicorn`) tornaram-se órfãs e devem ser revisadas em limpeza futura.
 
 ### 4.9 Desenvolvimento / Testes
 
@@ -239,7 +239,7 @@ A principal diferença é que `requirements.txt` contém 24 pacotes que `setup.p
 | AWS Bedrock | `boto3` | Não |
 | Crawling web | `crawl4ai` | Sim (tool registrada) |
 | Browser automation | `browser-use`, `playwright` | Sim (tool registrada) |
-| A2A protocol server | `fastapi`, `uvicorn`, `httpx` | Não |
+| A2A protocol server | `fastapi`, `uvicorn`, `httpx` | Não (arquivado, DEFER_FUTURE) |
 | Google search | `googlesearch-python` | Sim (ferramenta registrada) |
 | Baidu search | `baidusearch` | Sim |
 | DuckDuckGo search | `duckduckgo_search` | Sim |
@@ -400,7 +400,7 @@ Se alguém quiser substituir a implementação HTTP pelo SDK:
 - `crawl4ai` → crawling web
 - `browser-use`, `playwright` → automação de navegador
 - `googlesearch-python`, `baidusearch`, `duckduckgo_search` → buscadores específicos
-- `fastapi`, `uvicorn` → servidor A2A
+- `fastapi`, `uvicorn` → servidor A2A (arquivado, DEFER_FUTURE)
 - `pillow` → visão computacional (fluxo não usado atualmente)
 - `datasets`, `html2text`, `gymnasium`, `browsergym`, `unidiff`, `aiofiles`, `colorama`, `huggingface-hub` → **requerem investigação antes de qualquer decisão** (ver §4)
 
@@ -513,12 +513,12 @@ O submódulo `app/tool/chart_visualization/` tem seu próprio `package.json` com
 
 | Dependência | Arquivos que importam | Risco |
 |---|---|---|
-| `pydantic` | `app/config.py`, `app/schema.py`, `app/tool/base.py`, `app/tool/web_search.py`, `app/tool/browser_use_tool.py`, `app/tool/create_chat_completion.py`, `app/tool/computer_use_tool.py`, `app/tool/sandbox/sb_browser_tool.py`, `app/tool/sandbox/sb_files_tool.py`, `app/tool/sandbox/sb_vision_tool.py`, `app/tool/search/base.py`, `app/tool/chart_visualization/data_visualization.py`, `app/agent/base.py`, `app/agent/browser.py`, `app/agent/data_analysis.py`, `app/agent/manus.py`, `app/agent/mcp.py`, `app/agent/react.py`, `app/agent/sandbox_agent.py`, `app/agent/toolcall.py`, `app/agent/swe.py`, `app/flow/base.py`, `app/flow/planning.py`, `app/daytona/tool_base.py`, `protocol/a2a/app/agent.py` | Crítico |
+| `pydantic` | `app/config.py`, `app/schema.py`, `app/tool/base.py`, `app/tool/web_search.py`, `app/tool/browser_use_tool.py`, `app/tool/create_chat_completion.py`, `app/tool/computer_use_tool.py`, `app/tool/sandbox/sb_browser_tool.py`, `app/tool/sandbox/sb_files_tool.py`, `app/tool/sandbox/sb_vision_tool.py`, `app/tool/search/base.py`, `app/tool/chart_visualization/data_visualization.py`, `app/agent/base.py`, `app/agent/browser.py`, `app/agent/data_analysis.py`, `app/agent/manus.py`, `app/agent/mcp.py`, `app/agent/react.py`, `app/agent/sandbox_agent.py`, `app/agent/toolcall.py`, `app/agent/swe.py`, `app/flow/base.py`, `app/flow/planning.py`, `app/daytona/tool_base.py`, `archive/openmanus/a2a_protocol_unvalidated/a2a/app/agent.py` | Crítico |
 | `openai` | `app/llm.py`, `test_groq.py` | Crítico |
 | `tenacity` | `app/llm.py`, `app/tool/web_search.py` | Alto |
 | `loguru` | `app/logger.py` (usado em todo o projeto) | Crítico |
 | `tiktoken` | `app/llm.py` | Alto |
-| `httpx` | `app/integrations/daytona_http.py`, `app/tool/image_generator.py`, `protocol/a2a/app/main.py`, `scripts/inspect_daytona_file_upload.py`, `scripts/inspect_daytona_toolbox_routes.py` | Alto |
+| `httpx` | `app/integrations/daytona_http.py`, `app/tool/image_generator.py`, `archive/openmanus/a2a_protocol_unvalidated/a2a/app/main.py`, `scripts/inspect_daytona_file_upload.py`, `scripts/inspect_daytona_toolbox_routes.py` | Alto |
 | `mcp` | `app/mcp/server.py`, `app/tool/mcp.py` | Alto |
 | `docker` | `app/sandbox/core/manager.py`, `app/sandbox/core/sandbox.py`, `app/sandbox/core/terminal.py`, `tests/sandbox/test_docker_terminal.py`, `tests/sandbox/test_sandbox.py` | Médio |
 | `boto3` | `app/bedrock.py` | Baixo |
@@ -530,8 +530,8 @@ O submódulo `app/tool/chart_visualization/` tem seu próprio `package.json` com
 | `baidusearch` | `app/tool/search/baidu_search.py` | Baixo |
 | `duckduckgo_search` | `app/tool/search/duckduckgo_search.py` | Baixo |
 | `pillow` | `app/tool/sandbox/sb_browser_tool.py`, `app/tool/sandbox/sb_vision_tool.py` | **Arquivos não usados** |
-| `uvicorn` | `protocol/a2a/app/main.py` (lazy) | Baixo |
-| `fastapi` | Transitiva (via A2A) | Baixo |
+| `uvicorn` | `archive/openmanus/a2a_protocol_unvalidated/a2a/app/main.py` (lazy) | Baixo (arquivado) |
+| `fastapi` | Transitiva (via A2A, arquivado) | Baixo (arquivado) |
 | `playwright` | Transitiva (via browser-use) | Médio |
 | `tomli` | Backport (via `import tomllib` em `app/config.py`) | Baixo |
 | `pytest` | 4 testes em `tests/sandbox/` | Teste |

@@ -379,17 +379,19 @@
 
 ---
 
-## 10. Protocolo A2A
+## 10. Protocolo A2A — Arquivado
 
-| Caminho | Origem | Classificação | Observação |
-|---------|--------|---------------|------------|
-| `protocol/a2a/__init__.py` | Original | **DEFER_FUTURE** | Vazio |
-| `protocol/a2a/app/main.py` | Original | **DEFER_FUTURE** | Servidor Starlette + uvicorn |
-| `protocol/a2a/app/agent.py` | Original | **DEFER_FUTURE** | A2AManus wrapper |
-| `protocol/a2a/app/agent_executor.py` | Original | **DEFER_FUTURE** | ManusExecutor |
-| `protocol/a2a/app/README.md` | Original | **DEFER_FUTURE** | Documentação |
+O protocolo A2A foi movido para `archive/openmanus/a2a_protocol_unvalidated/` por ser **DEFER_FUTURE**: não possui contrato funcional, não foi testado localmente e não há integração com o entry point principal.
 
-**Nota:** Módulo experimental separado do core. Não integrado ao entry point principal. Útil para interoperabilidade agente-a-agente no futuro.
+| Caminho original | Destino no archive | Classificação | Observação |
+|---|---|---|---|
+| `protocol/a2a/__init__.py` | `archive/openmanus/a2a_protocol_unvalidated/a2a/__init__.py` | **DEFER_FUTURE** | Vazio |
+| `protocol/a2a/app/main.py` | `archive/openmanus/a2a_protocol_unvalidated/a2a/app/main.py` | **DEFER_FUTURE** | Servidor Starlette + uvicorn |
+| `protocol/a2a/app/agent.py` | `archive/openmanus/a2a_protocol_unvalidated/a2a/app/agent.py` | **DEFER_FUTURE** | A2AManus wrapper |
+| `protocol/a2a/app/agent_executor.py` | `archive/openmanus/a2a_protocol_unvalidated/a2a/app/agent_executor.py` | **DEFER_FUTURE** | ManusExecutor |
+| `protocol/a2a/app/README.md` | `archive/openmanus/a2a_protocol_unvalidated/a2a/app/README.md` | **DEFER_FUTURE** | Documentação |
+
+**Nota:** Módulo experimental sem contrato funcional. Preservado para referência futura, mas sem previsão de reativação. O diretório `protocol/a2a/` original foi removido.
 
 ---
 
@@ -500,7 +502,7 @@
 | `CODE_OF_CONDUCT.md` | Original | **KEEP_OPTIONAL** | Código de conduta |
 | `LICENSE` | Original | **KEEP_CORE** | MIT |
 | `app/daytona/README.md` | Original | **LEGACY_DEPENDENCY / INVESTIGATE** | Instruções SDK do caminho legado |
-| `protocol/a2a/app/README.md` | Original | **DEFER_FUTURE** | Guia A2A |
+| `archive/openmanus/a2a_protocol_unvalidated/a2a/app/README.md` | Original | **DEFER_FUTURE** | Guia A2A (arquivado) |
 | `examples/` | Original | **DEFER_FUTURE** | Exemplos de uso |
 
 ---
@@ -528,13 +530,13 @@
 | **KEEP_CORE** | ~25 | `app/agent/`, `app/flow/`, `app/prompt/`, `app/config.py`, `app/llm.py`, `app/schema.py`, `app/tool/base.py`, `app/tool/tool_collection.py`, `app/tool/terminate.py`, docs centrais, `main.py` |
 | **KEEP_PROTECTED** | ~5 | `app/tool/create_chat_completion.py`, `app/tool/python_execute.py`, `app/tool/str_replace_editor.py`, `app/tool/file_operators.py`, módulos base da futura Skill Adapter |
 | **KEEP_VALIDATED_TOOL** | ~6 | `daytona_sandbox.py`, `image_generator.py`, `daytona_http.py`, scripts de teste Daytona |
-| **KEEP_OPTIONAL** | ~30 | MCP, Bedrock, browser/search/crawl/chart tools, agentes opcionais, exemplos de config, A2A, Dockerfile |
+| **KEEP_OPTIONAL** | ~30 | MCP, Bedrock, browser/search/crawl/chart tools, agentes opcionais, exemplos de config, Dockerfile |
 | **KEEP_LOCAL_RUNTIME_OUTPUT** | 1 | `output_images/` |
 | **KEEP_VALIDATION_UTILS** | 1 | `scripts/validation/validate_modules.py` |
 | **QUARANTINE_FOR_FIX** | ~8 | `app/sandbox/`, `tests/sandbox/`, `sandbox_main.py` |
 | **LEGACY_DEPENDENCY** | ~8 | `app/daytona/`, `app/tool/sandbox/`, partes herdadas do caminho Daytona SDK |
 | **INVESTIGATE** | ~6 | `app/agent/sandbox_agent.py`, `app/tool/computer_use_tool.py`, `app/utils/logger.py`, browser/search/chart opcionais acoplados |
-| **DEFER_FUTURE** | ~12 | `protocol/a2a/`, `examples/`, scripts exploratórios Daytona, GraphStore futuro |
+| **DEFER_FUTURE** | ~12 | `archive/openmanus/a2a_protocol_unvalidated/`, `examples/`, scripts exploratórios Daytona, GraphStore futuro |
 | **REMOVE_CANDIDATE_AFTER_PROOF_ONLY** | 0 | Nenhum módulo tem prova suficiente para remoção |
 
 ---
@@ -861,6 +863,6 @@ app.daytona.*  [LEGACY_DEPENDENCY / INVESTIGATE]  ←── ainda possui importa
 app.tool.sandbox.*  [LEGACY_DEPENDENCY / INVESTIGATE]  ←── depende do SDK daytona legado
 sandbox_main.py  [LEGACY_DEPENDENCY / INVESTIGATE]  ←── entry point herdado, não remover sem prova
 
-protocol.a2a.*  [DEFER_FUTURE]  ←── diretório separado
+protocol.a2a.*  [DEFER_FUTURE → ARQUIVADO]  ←── movido para archive/openmanus/a2a_protocol_unvalidated/
 examples/  [DEFER_FUTURE]  ←── diretório separado
 ```

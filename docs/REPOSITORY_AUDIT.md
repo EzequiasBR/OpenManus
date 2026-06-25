@@ -22,7 +22,7 @@ O repositório é uma adaptação local do OpenManus (v0.1.0, MIT, FoundationAge
 | Daytona HTTP API | Funcional | `scripts/test_daytona_http.py` aprovado |
 | DaytonaSandboxTool v0.2.1 | Funcional | `scripts/test_daytona_sandbox_tool.py` + `scripts/test_manus_daytona_tool.py` aprovados |
 | Sandbox Docker local | Original intacto | 4 testes em `tests/sandbox/` |
-| A2A protocol | Original intacto | Não testado localmente |
+| A2A protocol | Arquivado em `archive/openmanus/a2a_protocol_unvalidated/` | DEFER_FUTURE — sem contrato funcional, não testado |
 
 ### Riscos principais
 
@@ -204,15 +204,17 @@ Os diretórios `app/daytona/` e `app/tool/sandbox/` fazem parte do código origi
 
 **Observação**: O `MCPServer` expõe tools do OpenManus (bash, browser, str_replace_editor, terminate) como servidor MCP. Isso pode ser um risco de segurança se exposto em rede.
 
-### 3.8 Protocolo A2A
+### 3.8 Protocolo A2A — Arquivado
 
-| Componente | Arquivo | Risco | Observação |
+O protocolo A2A foi movido para `archive/openmanus/a2a_protocol_unvalidated/` por ser **DEFER_FUTURE**: sem contrato funcional, sem testes, sem integração.
+
+| Componente | Arquivo (archive) | Risco | Observação |
 |---|---|---|---|
-| Servidor A2A | `protocol/a2a/app/main.py` | Baixo | Starlette + uvicorn. |
-| `A2AManus` | `protocol/a2a/app/agent.py` | Baixo | Wrapper. |
-| `ManusExecutor` | `protocol/a2a/app/agent_executor.py` | Baixo | Implementação A2A. |
+| Servidor A2A | `archive/openmanus/a2a_protocol_unvalidated/a2a/app/main.py` | Baixo (arquivado) | Starlette + uvicorn. |
+| `A2AManus` | `archive/openmanus/a2a_protocol_unvalidated/a2a/app/agent.py` | Baixo (arquivado) | Wrapper. |
+| `ManusExecutor` | `archive/openmanus/a2a_protocol_unvalidated/a2a/app/agent_executor.py` | Baixo (arquivado) | Implementação A2A. |
 
-**Observação**: Módulo experimental separado. Não integrado ao entry point principal. Requer uvicorn e Starlette.
+**Observação:** Módulo experimental preservado para referência futura. Sem previsão de reativação. O diretório `protocol/a2a/` original foi removido.
 
 ---
 
@@ -380,7 +382,7 @@ Os diretórios `app/daytona/` e `app/tool/sandbox/` fazem parte do código origi
 | `app/sandbox/core/` | Requer Docker em runtime | Testar com Docker disponível |
 | `app/tool/mcp.py` | Conexões de rede externas | Testar conexão SSE/stdio |
 | `app/mcp/server.py` | Expõe tools como servidor MCP | Testar segurança de rede |
-| `protocol/a2a/` | Experimental, não testado localmente | Testar servidor Starlette |
+| `archive/openmanus/a2a_protocol_unvalidated/` | Experimental, não testado localmente | DEFER_FUTURE — sem contrato funcional |
 | `chart_visualization/` | Requer Node.js + Puppeteer | Testar instalação de dependências |
 
 ### 5.4 Risco: Baixo
@@ -645,7 +647,7 @@ Após a criação de uma suíte de testes formal (`tests/`), os scripts de diagn
 
 | Origem | Quantidade | Caminhos |
 |---|---|---|
-| Original (upstream) ou herdado de branch upstream | ~80+ | `app/agent/react.py`, `app/agent/toolcall.py`, `app/agent/mcp.py`, `app/agent/swe.py`, `app/agent/data_analysis.py`, `app/agent/sandbox_agent.py`, `app/tool/bash.py`, `app/tool/python_execute.py`, `app/tool/str_replace_editor.py`, `app/tool/browser_use_tool.py`, `app/tool/web_search.py`, `app/tool/create_chat_completion.py`, `app/tool/ask_human.py`, `app/tool/planning.py`, `app/tool/file_operators.py`, `app/tool/crawl4ai.py`, `app/tool/computer_use_tool.py`, `app/tool/mcp.py`, `app/tool/search/*`, `app/tool/sandbox/*` (herdado), `app/tool/chart_visualization/*`, `app/daytona/*` (herdado), `app/sandbox/*`, `app/flow/*`, `app/prompt/*`, `app/mcp/*`, `app/utils/*`, `app/llm.py`, `app/schema.py`, `app/exceptions.py`, `app/logger.py`, `app/bedrock.py`, `config/*.example*`, `.github/*`, `tests/sandbox/*`, `protocol/a2a/*`, `examples/*`, `Dockerfile`, `setup.py`, `main.py`, `run_*.py`, `sandbox_main.py`, `README.md` |
+| Original (upstream) ou herdado de branch upstream | ~80+ | `app/agent/react.py`, `app/agent/toolcall.py`, `app/agent/mcp.py`, `app/agent/swe.py`, `app/agent/data_analysis.py`, `app/agent/sandbox_agent.py`, `app/tool/bash.py`, `app/tool/python_execute.py`, `app/tool/str_replace_editor.py`, `app/tool/browser_use_tool.py`, `app/tool/web_search.py`, `app/tool/create_chat_completion.py`, `app/tool/ask_human.py`, `app/tool/planning.py`, `app/tool/file_operators.py`, `app/tool/crawl4ai.py`, `app/tool/computer_use_tool.py`, `app/tool/mcp.py`, `app/tool/search/*`, `app/tool/sandbox/*` (herdado), `app/tool/chart_visualization/*`, `app/daytona/*` (herdado), `app/sandbox/*`, `app/flow/*`, `app/prompt/*`, `app/mcp/*`, `app/utils/*`, `app/llm.py`, `app/schema.py`, `app/exceptions.py`, `app/logger.py`, `app/bedrock.py`, `config/*.example*`, `.github/*`, `tests/sandbox/*`, `archive/openmanus/a2a_protocol_unvalidated/*`, `examples/*`, `Dockerfile`, `setup.py`, `main.py`, `run_*.py`, `sandbox_main.py`, `README.md` |
 | Adicionado localmente | 14 | `app/integrations/__init__.py`, `app/integrations/daytona_http.py`, `app/tool/daytona_sandbox.py`, `app/tool/image_generator.py`, `scripts/` (10 arquivos), `test_groq.py` |
 | Modificado localmente | 6 | `app/agent/base.py` (commit `4a05092`), `app/agent/browser.py` (commit `4a05092`), `app/agent/manus.py` (commits `6b403e6`, `8cb20ba`), `app/config.py` (commit `4a05092`), `app/tool/__init__.py` (commits `6b403e6`, `8cb20ba`), `requirements.txt` (commit `4a05092`) |
 | Adicionado localmente (docs) | 2 | `docs/PROJECT_STATUS.md`, `docs/DAYTONA_SANDBOX_TOOL_CONTRACT_v0_2_1.md` |
