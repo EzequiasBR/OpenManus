@@ -2,11 +2,13 @@
 
 > **Objetivo:** Criar um plano de decisão por módulo para o fork local OpenManus antes de qualquer limpeza estrutural, remoção de dependências ou continuação da integração GraphStore.
 >
-> **Baseado em:** `REPOSITORY_INVENTORY.md`, `REPOSITORY_AUDIT.md`, `DEPENDENCY_AUDIT.md`, `GRAPHSTORE_EXISTING_PATTERN_AUDIT.md`, `GRAPHSTORE_CLOSED_BINARY_INTEGRATION_DECISION_v0_1.md`, `reports/dependency_snapshots/pip_freeze_current_2026_06_24.txt`
+> **Baseado em:** `REPOSITORY_INVENTORY.md`, `REPOSITORY_AUDIT.md`, `DEPENDENCY_AUDIT.md`, `GRAPHSTORE_EXISTING_PATTERN_AUDIT.md`, `GRAPHSTORE_CLOSED_BINARY_INTEGRATION_DECISION_v0_1.md`, `MODULE_VALIDATION_CONSOLIDATED_DECISION_v0_1.md`, `scripts/validation/validate_modules.py`, `reports/dependency_snapshots/pip_freeze_current_2026_06_24.txt`
 >
 > **Regra:** Nenhum código foi alterado. Nenhuma limpeza foi executada. Este documento é apenas planejamento.
 >
 > **Data:** 25/06/2026
+
+> **Estado desta revisão:** a validação modular foi executada por dois agentes independentes, com metodologias complementares, e consolidada em `MODULE_VALIDATION_CONSOLIDATED_DECISION_v0_1.md`. Este plano já incorpora essa consolidação e **não autoriza limpeza automática**.
 
 ---
 
@@ -15,12 +17,16 @@
 | Código | Significado | Ação |
 |--------|-------------|------|
 | **KEEP_CORE** | Módulo necessário para funcionamento atual da Manus | Manter, testar, proteger |
+| **KEEP_PROTECTED** | Módulo que não deve ser removido agora, mesmo exigindo desacoplamento futuro | Manter, proteger, investigar depois |
 | **KEEP_VALIDATED_TOOL** | Módulo/ferramenta já validado no fork local | Manter, criar teste formal |
 | **KEEP_OPTIONAL** | Útil, mas opcional | Manter, pode virar extras |
-| **QUARANTINE** | Deve existir no repositório, mas não carregado por padrão | Mover para disabled/ ou proteger import |
+| **KEEP_LOCAL_RUNTIME_OUTPUT** | Diretório/artefato local necessário ao runtime atual | Preservar; não tratar como lixo |
+| **KEEP_VALIDATION_UTILS** | Utilitário de validação usado para auditoria e comparação independente | Manter, versionar e reutilizar |
+| **QUARANTINE_FOR_FIX** | Deve continuar no repositório, mas fora da validação padrão até correção | Isolar, corrigir ou desacoplar em fase própria |
+| **LEGACY_DEPENDENCY** | Caminho legado ainda referenciado por imports ou entry points | Mapear, desacoplar, só então decidir |
 | **INVESTIGATE** | Requer análise adicional antes de decisão | Investigar antes de qualquer ação |
 | **DEFER_FUTURE** | Pode ser útil em fase futura, mas não entra no MVP atual | Documentar, não remover |
-| **REMOVE_CANDIDATE** | Candidato à remoção futura somente após teste e confirmação | Testar, confirmar não-uso, remover em branch separada |
+| **REMOVE_CANDIDATE_AFTER_PROOF_ONLY** | Candidato à remoção futura somente após prova de não-uso e validação de boot | Testar, confirmar não-uso, remover em branch separada |
 
 ---
 
@@ -212,8 +218,8 @@
 | **Evidência de uso** | Entry point `sandbox_main.py`. **Não usado na configuração local.** |
 | **Dependências ausentes** | Requer SDK `daytona` não instalado |
 | **Risco se remover** | Entry point `sandbox_main.py` quebraria (já quebra sem SDK) |
-| **Classificação** | **QUARANTINE** |
-| **Ação** | Não remover. Documentar que depende de SDK não instalado. Proteger import contra crash acidental. |
+| **Classificação** | **INVESTIGATE** |
+| **Ação** | Não remover. Tratar como caminho legado/acoplado ao SDK Daytona e investigar antes de qualquer decisão estrutural. |
 
 ---
 
@@ -226,15 +232,15 @@
 | `app/tool/base.py` | `BaseTool`, `ToolResult` | Original | **KEEP_CORE** | Classe base de todas as tools |
 | `app/tool/tool_collection.py` | `ToolCollection` | Original | **KEEP_CORE** | Gerenciamento de tools |
 | `app/tool/terminate.py` | `Terminate` | Original | **KEEP_CORE** | Finaliza interação |
-| `app/tool/bash.py` | `Bash` | Original | **KEEP_CORE** | Execução shell |
-| `app/tool/python_execute.py` | `PythonExecute` | Original | **KEEP_CORE** | Execução Python |
-| `app/tool/str_replace_editor.py` | `StrReplaceEditor` | Original | **KEEP_CORE** | Edição de arquivos |
+| `app/tool/bash.py` | `Bash` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Execução shell; revisar adequação ao ambiente Windows |
+| `app/tool/python_execute.py` | `PythonExecute` | Original | **KEEP_PROTECTED** | Registrada no Manus; não remover antes de testes mínimos de boot/import |
+| `app/tool/str_replace_editor.py` | `StrReplaceEditor` | Original | **KEEP_PROTECTED** | Registrada no Manus e ligada ao fluxo de edição/arquivos |
 | `app/tool/ask_human.py` | `AskHuman` | Original | **KEEP_CORE** | Input do usuário |
-| `app/tool/browser_use_tool.py` | `BrowserUseTool` | Original | **KEEP_OPTIONAL** | Depende de `browser-use` + `playwright` |
-| `app/tool/web_search.py` | `WebSearch` | Original | **KEEP_OPTIONAL** | Chamadas de API externa |
-| `app/tool/create_chat_completion.py` | `CreateChatCompletion` | Original | **KEEP_CORE** | Saída LLM estruturada |
+| `app/tool/browser_use_tool.py` | `BrowserUseTool` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Depende de `browser-use` + `playwright`; ainda registrada no Manus |
+| `app/tool/web_search.py` | `WebSearch` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Chamadas de API externa; backend de busca opcional |
+| `app/tool/create_chat_completion.py` | `CreateChatCompletion` | Original | **KEEP_PROTECTED** | Saída LLM estruturada usada como tool padrão de `ToolCallAgent` |
 | `app/tool/planning.py` | `PlanningTool` | Original | **KEEP_OPTIONAL** | Gerencia planos multi-passo |
-| `app/tool/file_operators.py` | `FileOperator` | Original | **KEEP_OPTIONAL** | Abstração de I/O |
+| `app/tool/file_operators.py` | `FileOperator` | Original | **KEEP_PROTECTED / INVESTIGATE** | Abstração de I/O acoplada ao `SANDBOX_CLIENT` |
 | `app/tool/mcp.py` | `MCPClientTool`, `MCPClients` | Original | **KEEP_OPTIONAL** | Protocolo MCP client |
 
 **Nota:** Nenhuma tool core possui testes unitários. Risco médio-alto.
@@ -250,38 +256,38 @@
 
 | Caminho | Tool | Origem | Classificação | Observação |
 |---------|------|--------|---------------|------------|
-| `app/tool/crawl4ai.py` | `Crawl4aiTool` | Original | **KEEP_OPTIONAL** | Lazy import. Falha graciosa se ausente. |
+| `app/tool/crawl4ai.py` | `Crawl4aiTool` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Lazy import. Falha graciosa se ausente. |
 | `app/tool/computer_use_tool.py` | `ComputerUseTool` | Original | **INVESTIGATE** | Automação de desktop. Risco de segurança. Não registrada no Manus. Requer confirmação de uso. |
 
 ### 3.4 `app/tool/search/` (Motores de Busca)
 
 | Caminho | Origem | Classificação | Observação |
 |---------|--------|---------------|------------|
-| `base.py` | Original | **KEEP_CORE** | Classe base |
-| `google_search.py` | Original | **KEEP_OPTIONAL** | Requer API key Google |
-| `baidu_search.py` | Original | **KEEP_OPTIONAL** | Requer API key Baidu |
-| `bing_search.py` | Original | **KEEP_OPTIONAL** | Requer API key Bing |
-| `duckduckgo_search.py` | Original | **KEEP_OPTIONAL** | Sem API key |
+| `base.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Classe base do backend de busca |
+| `google_search.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Requer API key Google |
+| `baidu_search.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Requer API key Baidu |
+| `bing_search.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Requer API key Bing |
+| `duckduckgo_search.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Sem API key |
 
 **Nota:** Gerenciados por `app/tool/web_search.py` com fallback. Nenhum é importado diretamente pelo Manus — todos via `WebSearch`.
 
-### 3.5 `app/tool/sandbox/` (SDK Daytona Original — Não Usado)
+### 3.5 `app/tool/sandbox/` (SDK Daytona Original — Caminho Legado)
 
 | Caminho | Origem | Classificação | Observação |
 |---------|--------|---------------|------------|
-| `sb_shell_tool.py` | Original (herdado) | **QUARANTINE** | Depende de SDK `daytona` não instalado |
-| `sb_files_tool.py` | Original (herdado) | **QUARANTINE** | Depende de SDK `daytona` não instalado |
-| `sb_browser_tool.py` | Original (herdado) | **QUARANTINE** | Depende de SDK `daytona` não instalado |
-| `sb_vision_tool.py` | Original (herdado) | **QUARANTINE** | Depende de SDK `daytona` não instalado |
+| `sb_shell_tool.py` | Original (herdado) | **LEGACY_DEPENDENCY / INVESTIGATE** | Depende de SDK `daytona` não instalado |
+| `sb_files_tool.py` | Original (herdado) | **LEGACY_DEPENDENCY / INVESTIGATE** | Depende de SDK `daytona` não instalado |
+| `sb_browser_tool.py` | Original (herdado) | **LEGACY_DEPENDENCY / INVESTIGATE** | Depende de SDK `daytona` não instalado |
+| `sb_vision_tool.py` | Original (herdado) | **LEGACY_DEPENDENCY / INVESTIGATE** | Depende de SDK `daytona` não instalado |
 
 ### 3.6 `app/tool/chart_visualization/` (Visualização de Gráficos)
 
 | Caminho | Origem | Classificação | Observação |
 |---------|--------|---------------|------------|
-| `__init__.py` | Original | **KEEP_OPTIONAL** | Re-exporta |
-| `chart_prepare.py` | Original | **KEEP_OPTIONAL** | Gera CSV + JSON |
-| `data_visualization.py` | Original | **KEEP_OPTIONAL** | Spawns `npx ts-node` |
-| `python_execute.py` | Original | **KEEP_OPTIONAL** | Execução Python |
+| `__init__.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Re-exporta |
+| `chart_prepare.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Gera CSV + JSON |
+| `data_visualization.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Spawns `npx ts-node` |
+| `python_execute.py` | Original | **KEEP_OPTIONAL / INVESTIGATE** | Execução Python |
 | `package.json` | Original | **KEEP_OPTIONAL** | Dependências Node |
 | `tsconfig.json` | Original | **KEEP_OPTIONAL** | Config TypeScript |
 | `src/chartVisualize.ts` | Original | **KEEP_OPTIONAL** | Renderização VChart |
@@ -299,15 +305,15 @@
 | `__init__.py` | **Adicionado localmente** | **KEEP_CORE** | Vazio, necessário para pacote |
 | `daytona_http.py` | **Adicionado localmente** | **KEEP_VALIDATED_TOOL** | Cliente HTTP Daytona (~490 linhas). Validado. |
 
-### 4.2 `app/daytona/` (SDK Daytona Original — Não Usado)
+### 4.2 `app/daytona/` (SDK Daytona Original — Caminho Legado)
 
 | Caminho | Origem | Classificação | Observação |
 |---------|--------|---------------|------------|
-| `sandbox.py` | Original (herdado) | **QUARANTINE** | Requer SDK `daytona` não instalado |
-| `tool_base.py` | Original (herdado) | **QUARANTINE** | Requer SDK `daytona` não instalado |
-| `README.md` | Original (herdado) | **QUARANTINE** | Documentação do fluxo SDK |
+| `sandbox.py` | Original (herdado) | **LEGACY_DEPENDENCY / INVESTIGATE** | Requer SDK `daytona` não instalado |
+| `tool_base.py` | Original (herdado) | **LEGACY_DEPENDENCY / INVESTIGATE** | Requer SDK `daytona` não instalado |
+| `README.md` | Original (herdado) | **LEGACY_DEPENDENCY / INVESTIGATE** | Documentação do fluxo SDK |
 
-**Evidência de não-uso:** Nenhum arquivo em `app/agent/manus.py`, `app/tool/daytona_sandbox.py` ou `app/tool/image_generator.py` importa de `app.daytona`.
+**Evidência consolidada:** `app/daytona/` não é o caminho validado atual do Manus, mas ainda é importado por `app/agent/sandbox_agent.py`, `app/tool/computer_use_tool.py` e `app/tool/sandbox/*`. Portanto, é legado/acoplado e não pode ser removido ainda.
 
 ---
 
@@ -318,7 +324,7 @@
 | `app/flow/__init__.py` | Original | **KEEP_CORE** | Vazio |
 | `app/flow/base.py` | Original | **KEEP_CORE** | Classe base abstrata |
 | `app/flow/flow_factory.py` | Original | **KEEP_CORE** | Factory method |
-| `app/flow/planning.py` | Original | **KEEP_OPTIONAL** | Orquestra agentes. Entry point `run_flow.py`. |
+| `app/flow/planning.py` | Original | **KEEP_CORE** | Orquestra agentes. Entry point `run_flow.py`. |
 
 ---
 
@@ -343,14 +349,14 @@
 
 | Caminho | Origem | Classificação | Observação |
 |---------|--------|---------------|------------|
-| `app/sandbox/__init__.py` | Original | **KEEP_OPTIONAL** | Vazio |
-| `app/sandbox/client.py` | Original | **KEEP_OPTIONAL** | Factory (BaseSandboxClient, LocalSandboxClient) |
-| `app/sandbox/core/sandbox.py` | Original | **KEEP_OPTIONAL** | DockerSandbox lifecycle |
-| `app/sandbox/core/terminal.py` | Original | **KEEP_OPTIONAL** | AsyncDockerizedTerminal |
-| `app/sandbox/core/manager.py` | Original | **KEEP_OPTIONAL** | SandboxManager (pool) |
-| `app/sandbox/core/exceptions.py` | Original | **KEEP_OPTIONAL** | Exceções |
+| `app/sandbox/__init__.py` | Original | **QUARANTINE_FOR_FIX** | Pacote do sandbox Docker local |
+| `app/sandbox/client.py` | Original | **QUARANTINE_FOR_FIX** | Factory (BaseSandboxClient, LocalSandboxClient) |
+| `app/sandbox/core/sandbox.py` | Original | **QUARANTINE_FOR_FIX** | DockerSandbox lifecycle |
+| `app/sandbox/core/terminal.py` | Original | **QUARANTINE_FOR_FIX** | AsyncDockerizedTerminal |
+| `app/sandbox/core/manager.py` | Original | **QUARANTINE_FOR_FIX** | SandboxManager (pool) |
+| `app/sandbox/core/exceptions.py` | Original | **QUARANTINE_FOR_FIX** | Exceções |
 
-**Nota:** `app/sandbox/` é o único módulo com testes unitários em `tests/sandbox/`. Não usado na configuração local (`use_sandbox = false`). Requer Docker Desktop em execução.
+**Nota consolidada:** Docker existe no PC e já foi validado manualmente em fases anteriores, mas `app/sandbox/` não é confiável agora. Em algumas validações o Docker estava desligado ou com named pipe indisponível; em outras, com Docker ativo, o fluxo falhou na camada sandbox/terminal/socket. Decisão final: **não remover**, deixar em quarentena para correção/desacoplamento futuro.
 
 ---
 
@@ -358,7 +364,7 @@
 
 | Caminho | Origem | Classificação | Observação |
 |---------|--------|---------------|------------|
-| `app/mcp/__init__.py` | Original | **KEEP_CORE** | Vazio |
+| `app/mcp/__init__.py` | Original | **KEEP_OPTIONAL** | Vazio |
 | `app/mcp/server.py` | Original | **KEEP_OPTIONAL** | Servidor FastMCP. Entry point `run_mcp_server.py`. |
 
 ---
@@ -395,7 +401,7 @@
 | `run_flow.py` | Original | **KEEP_OPTIONAL** | PlanningFlow com agentes |
 | `run_mcp.py` | Original | **KEEP_OPTIONAL** | MCPAgent via stdio/SSE |
 | `run_mcp_server.py` | Original | **KEEP_OPTIONAL** | Servidor MCP (FastMCP) |
-| `sandbox_main.py` | Original (herdado) | **QUARANTINE** | SandboxManus — requer SDK daytona não instalado |
+| `sandbox_main.py` | Original (herdado) | **LEGACY_DEPENDENCY / INVESTIGATE** | Entry point do caminho legado `SandboxManus`; não remover antes de mapear dependências |
 | `test_groq.py` | **Adicionado localmente** | **INVESTIGATE** | Listado no `.gitignore` mas commitado. Decidir: remover tracking ou versionar. |
 
 ---
@@ -422,13 +428,19 @@
 | `scripts/test_daytona_file_api.py` | **Adicionado localmente** | **DEFER_FUTURE** | Exploratório |
 | `scripts/test_daytona_toolbox_execute.py` | **Adicionado localmente** | **DEFER_FUTURE** | Coberto por `test_daytona_sandbox_tool.py` |
 
+### 12.3 Utilitários de Validação Modular
+
+| Caminho | Origem | Classificação | Observação |
+|---------|--------|---------------|------------|
+| `scripts/validation/validate_modules.py` | **Adicionado localmente** | **KEEP_VALIDATION_UTILS** | Utilitário usado na validação modular consolidada; não remover |
+
 ---
 
 ## 13. Testes
 
 | Caminho | Origem | Classificação | Observação |
 |---------|--------|---------------|------------|
-| `tests/sandbox/` | Original | **KEEP_OPTIONAL** | 4 testes da sandbox Docker local. Únicos testes formais. |
+| `tests/sandbox/` | Original | **QUARANTINE_FOR_FIX** | Única suíte formal; falha no ambiente atual e deve sair da validação padrão até correção/desacoplamento. |
 
 ---
 
@@ -472,6 +484,7 @@
 | `docs/DEPENDENCY_AUDIT.md` | **Adicionado localmente** | **KEEP_CORE** | Auditoria de dependências |
 | `docs/GRAPHSTORE_EXISTING_PATTERN_AUDIT.md` | **Adicionado localmente** | **KEEP_CORE** | Auditoria de padrões |
 | `docs/GRAPHSTORE_CLOSED_BINARY_INTEGRATION_DECISION_v0_1.md` | **Adicionado localmente** | **KEEP_CORE** | Decisão GraphStore |
+| `docs/MODULE_VALIDATION_CONSOLIDATED_DECISION_v0_1.md` | **Adicionado localmente** | **KEEP_CORE** | Consolidação das duas validações independentes |
 | `docs/MODULE_DISPOSITION_PLAN_v0_1.md` | **Adicionado localmente** | **KEEP_CORE** | Este documento |
 
 ### 15.2 Relatórios
@@ -486,7 +499,7 @@
 |---------|--------|---------------|------------|
 | `CODE_OF_CONDUCT.md` | Original | **KEEP_OPTIONAL** | Código de conduta |
 | `LICENSE` | Original | **KEEP_CORE** | MIT |
-| `app/daytona/README.md` | Original | **QUARANTINE** | Instruções SDK (não aplicável) |
+| `app/daytona/README.md` | Original | **LEGACY_DEPENDENCY / INVESTIGATE** | Instruções SDK do caminho legado |
 | `protocol/a2a/app/README.md` | Original | **DEFER_FUTURE** | Guia A2A |
 | `examples/` | Original | **DEFER_FUTURE** | Exemplos de uso |
 
@@ -503,7 +516,7 @@
 | `.vscode/` | Original | **KEEP_OPTIONAL** | Configurações VS Code |
 | `.local_notes/` | **Adicionado localmente** | **KEEP_OPTIONAL** | Notas locais |
 | `assets/` | Original | **KEEP_OPTIONAL** | Assets do README |
-| `output_images/` | — | **KEEP_OPTIONAL** | Diretório gerado em runtime |
+| `output_images/` | — | **KEEP_LOCAL_RUNTIME_OUTPUT** | Diretório local de runtime preservado para a geração de imagens |
 | `.bak/` | — | **KEEP_OPTIONAL** | Backups |
 
 ---
@@ -512,13 +525,17 @@
 
 | Classificação | Quantidade | Módulos Principais |
 |---------------|------------|---------------------|
-| **KEEP_CORE** | ~25 | config, llm, schema, exceptions, logger, agent/base, agent/react, agent/toolcall, agent/manus, tool/base, tool/terminate, tool/bash, tool/python_execute, tool/str_replace_editor, tool/ask_human, tool/create_chat_completion, integrations/__init__, flow/base, flow/flow_factory, prompt/manus, prompt/toolcall, utils/files_utils, main.py, docs recentes, config.toml, config.example.toml, README.md |
-| **KEEP_VALIDATED_TOOL** | ~6 | daytona_sandbox.py, image_generator.py, daytona_http.py, 3 scripts de teste de regressão |
-| **KEEP_OPTIONAL** | ~35 | browser agent, MCP agent, SWE agent, DataAnalysis, sandbox Docker, search tools, crawl4ai, chart_visualization, browser_use_tool, web_search, planning, file_operators, mcp.py/mcp server, A2A, bedrock, exemplos de config, Dockerfile, CI/CD, READMEs traduzidos |
-| **QUARANTINE** | ~9 | app/daytona/ (3), app/tool/sandbox/ (4), sandbox_agent.py, sandbox_main.py, app/daytona/README.md |
-| **INVESTIGATE** | ~3 | app/utils/logger.py (structful vs loguru), computer_use_tool.py, test_groq.py |
-| **DEFER_FUTURE** | ~12 | protocol/a2a/, examples/, scripts de diagnóstico Daytona (7) |
-| **REMOVE_CANDIDATE** | 0 | Nenhum módulo tem evidência suficiente para remoção |
+| **KEEP_CORE** | ~25 | `app/agent/`, `app/flow/`, `app/prompt/`, `app/config.py`, `app/llm.py`, `app/schema.py`, `app/tool/base.py`, `app/tool/tool_collection.py`, `app/tool/terminate.py`, docs centrais, `main.py` |
+| **KEEP_PROTECTED** | ~5 | `app/tool/create_chat_completion.py`, `app/tool/python_execute.py`, `app/tool/str_replace_editor.py`, `app/tool/file_operators.py`, módulos base da futura Skill Adapter |
+| **KEEP_VALIDATED_TOOL** | ~6 | `daytona_sandbox.py`, `image_generator.py`, `daytona_http.py`, scripts de teste Daytona |
+| **KEEP_OPTIONAL** | ~30 | MCP, Bedrock, browser/search/crawl/chart tools, agentes opcionais, exemplos de config, A2A, Dockerfile |
+| **KEEP_LOCAL_RUNTIME_OUTPUT** | 1 | `output_images/` |
+| **KEEP_VALIDATION_UTILS** | 1 | `scripts/validation/validate_modules.py` |
+| **QUARANTINE_FOR_FIX** | ~8 | `app/sandbox/`, `tests/sandbox/`, `sandbox_main.py` |
+| **LEGACY_DEPENDENCY** | ~8 | `app/daytona/`, `app/tool/sandbox/`, partes herdadas do caminho Daytona SDK |
+| **INVESTIGATE** | ~6 | `app/agent/sandbox_agent.py`, `app/tool/computer_use_tool.py`, `app/utils/logger.py`, browser/search/chart opcionais acoplados |
+| **DEFER_FUTURE** | ~12 | `protocol/a2a/`, `examples/`, scripts exploratórios Daytona, GraphStore futuro |
+| **REMOVE_CANDIDATE_AFTER_PROOF_ONLY** | 0 | Nenhum módulo tem prova suficiente para remoção |
 
 ---
 
@@ -629,12 +646,13 @@ Escopo sugerido: schema de Action Payload, contratos de adapter, validação mí
 - [ ] `git status --short` limpo (sem alterações não commitadas)
 - [ ] Testes existentes passando:
   - [ ] `python -m pytest tests/ -v`
+  - [ ] `python scripts/validation/validate_modules.py`
   - [ ] `python scripts/test_daytona_http.py`
   - [ ] `python scripts/test_daytona_sandbox_tool.py`
   - [ ] `python scripts/test_manus_daytona_tool.py`
 - [ ] Backup/commit antes de qualquer mudança
 - [ ] Remoção em branch separada (nunca na main)
-- [ ] Uma categoria por vez (não misturar KEEP_OPTIONAL com QUARANTINE)
+- [ ] Uma categoria por vez (não misturar KEEP_OPTIONAL com QUARANTINE_FOR_FIX ou LEGACY_DEPENDENCY)
 - [ ] Rollback simples (`git revert` ou `git checkout`)
 - [ ] Validação de boot:
   ```bash
@@ -690,13 +708,17 @@ Escopo sugerido: schema de Action Payload, contratos de adapter, validação mí
 - **Tools validadas:** `app/tool/daytona_sandbox.py`, `app/tool/image_generator.py` — sem testes formais, mas validadas manualmente.
 - **Integração Daytona:** `app/integrations/daytona_http.py` — sem alternativa no momento.
 - **Geração de imagem:** `app/tool/image_generator.py` — integração validada.
+- **Output local de imagem:** `output_images/` — preservar como pasta local de runtime.
 - **Padrões de tool call:** `app/agent/toolcall.py`, `app/tool/base.py` — base da futura camada de Skill Adapter.
 - **Módulos base da futura camada Skill Adapter:** `app/agent/manus.py`, `app/agent/toolcall.py`, `app/tool/`, `app/integrations/`, `app/schema.py`, `app/config.py` — serão usados como fundação da Skill Adapter e API Execution Layer.
 - **Qualquer documentação de skills/protocolos:** Não remover antes de criar contrato separado (`SKILL_ADAPTER_AND_API_EXECUTION_CONTRACT`).
 - **Qualquer módulo usado por testes:** Verificar dependências de `tests/sandbox/` antes de alterar `app/sandbox/`.
 - **Qualquer módulo cuja origem ainda não esteja clara:** Módulos marcados como **INVESTIGATE** não devem ser alterados.
+- **Ferramentas protegidas:** `app/tool/create_chat_completion.py`, `app/tool/python_execute.py`, `app/tool/str_replace_editor.py`, `app/tool/file_operators.py` não devem ser removidas nesta fase.
+- **Utilitário de validação:** `scripts/validation/validate_modules.py` deve ser preservado para comparação entre relatórios.
 - **`requirements.txt` e `setup.py`:** Não alterar sem seguir a checklist da seção 19.
-- **Módulos marcados como QUARANTINE:** Não remover — apenas isolar de carregamento padrão.
+- **Módulos marcados como QUARANTINE_FOR_FIX:** Não remover — apenas isolar de carregamento padrão.
+- **Módulos marcados como LEGACY_DEPENDENCY:** Não remover até mapear todos os importadores e entry points.
 
 ---
 
@@ -709,71 +731,69 @@ Escopo sugerido: schema de Action Payload, contratos de adapter, validação mí
 - [x] `docs/DEPENDENCY_AUDIT.md`
 - [x] `docs/GRAPHSTORE_EXISTING_PATTERN_AUDIT.md`
 - [x] `docs/GRAPHSTORE_CLOSED_BINARY_INTEGRATION_DECISION_v0_1.md`
+- [x] `docs/MODULE_VALIDATION_CONSOLIDATED_DECISION_v0_1.md`
 - [x] `docs/MODULE_DISPOSITION_PLAN_v0_1.md`
 
-### Fase 1 — Quarentena de Módulos Opcionais Não Usados por Padrão
+### Fase 1 — Consolidação Sem Remoção
 
-**Alvo:** Módulos **QUARANTINE** — `app/daytona/`, `app/tool/sandbox/`, `sandbox_agent.py`, `sandbox_main.py`
-
-**Ações:**
-- Mover diretórios para `app/disabled/` ou similar (não remover)
-- Verificar que nenhum import ativo os referencia
-- Atualizar `.gitignore` se necessário
-- Rodar checklist completa da seção 19
-
-### Fase 1.5 — Investigação Obrigatória
-
-**Alvo:** Módulos **INVESTIGATE**
+**Alvo:** Atualizar documentação, checklist e nomenclatura sem mover ou remover módulos.
 
 **Ações:**
-- `app/utils/logger.py`: Mapear qual logger cada arquivo importa (loguru vs structlog). Decidir unificação.
-- `app/tool/computer_use_tool.py`: Confirmar se é usado por algum agente. Se não, mover para `QUARANTINE`.
-- `test_groq.py`: Decidir se remove tracking (`git rm --cached`) ou remove do `.gitignore`.
+- Preservar classificações consolidadas
+- Não autorizar limpeza automática
+- Manter `scripts/validation/validate_modules.py` como utilitário comparativo
 
-### Fase 2 — Revisão de Dependências Opcionais
+### Fase 2A — Consolidação do Plano
 
-**Alvo:** Dependências marcadas como opcionais na `DEPENDENCY_AUDIT.md`
-
-**Ações:**
-- Separar `requirements-dev.txt` com `pytest`, `pytest-asyncio`
-- Separar `requirements-optional.txt` com `docker`, `boto3`, `crawl4ai`, buscadores
-- Mover `setuptools` de `requirements.txt` para `requirements-dev.txt`
-- Investigar 10 dependências sem import direto confirmado (ver DEPENDENCY_AUDIT.md §9.3)
-
-### Fase 3 — Remoção Controlada de Candidatos Confirmados
-
-**Alvo:** Somente após fases 1 e 2 validadas
+**Alvo:** Este documento e os relatórios de decisão.
 
 **Ações:**
-- Remover módulos QUARANTINE que tiverem confirmação de não-uso por 30 dias
-- Consolidar scripts de diagnóstico em suite de testes formal
-- Remover scripts de diagnóstico redundantes
+- Incorporar achados dos dois agentes independentes
+- Manter coerência entre classificações, Docker, Daytona e imagem
+- Revisar checklist de limpeza com base na validação consolidada
 
-### Fase 4 — Simplificação de Documentação e Setup
+### Fase 2B — Criar Testes Mínimos de Boot/Import/Registry
 
-**Alvo:** Configurações e exemplos
-
-**Ações:**
-- Consolidar exemplos de config TOML (manter apenas os mais relevantes)
-- Atualizar README.md para refletir o estado do fork
-- Arquivar documentação upstream não aplicável
-
-### Fase 5 — Criação do Contrato Skill Adapter (antes ou junto com GraphStore)
-
-**Alvo:** Arquitetura futura obrigatória (seção 18)
+**Alvo:** Core e tools validadas.
 
 **Ações:**
-- Criar `docs/SKILL_ADAPTER_AND_API_EXECUTION_CONTRACT_v0_1.md`
-- Definir schema de Action Payload (Pydantic)
-- Validar conceito mínimo com `ImageGeneratorTool` como prova
-- Mapear como `ToolCallAgent` e `app/agent/manus.py` rotearão para `SkillRouter`
-- Definir interface do `Validator` (validação + retry)
+- Criar testes mínimos de boot para `Manus`
+- Criar testes mínimos de import/registry para `ToolCallAgent`, `ToolCollection` e tools validadas
+- Garantir validação do core sem depender de `tests/sandbox/`
 
-### Fase 6 — Continuação da Integração GraphStore
+### Fase 2C — Isolar Sandbox Docker Local da Validação Padrão
+
+**Alvo:** `app/sandbox/` e `tests/sandbox/`
+
+**Ações:**
+- Marcar `tests/sandbox/*` como dependentes de Docker
+- Retirar sandbox Docker do caminho padrão de validação
+- Manter `app/sandbox/` e `tests/sandbox/` como `QUARANTINE_FOR_FIX`
+
+### Fase 2D — Mapear Daytona Legado e Decidir Refactor/Desacoplamento
+
+**Alvo:** `app/daytona/`, `app/agent/sandbox_agent.py`, `app/tool/computer_use_tool.py`, `app/tool/sandbox/`
+
+**Ações:**
+- Listar importadores ativos de `app.daytona.*`
+- Confirmar se `sandbox_main.py` e tools legadas ainda têm uso real
+- Separar explicitamente o caminho validado (`daytona_http.py` + `daytona_sandbox.py`) do caminho legado SDK
+
+### Fase 2E — Avaliar Remoções Controladas Somente Depois de Prova
+
+**Alvo:** Apenas módulos já comprovadamente não usados.
+
+**Ações:**
+- Exigir prova de não-uso
+- Exigir testes mínimos de boot/import/registry passando sem o módulo
+- Executar sempre em branch separada com rollback documentado
+
+### Fase 3 — Retomar GraphStore Binário Fechado
 
 **Alvo:** Nova funcionalidade
 
 **Ações:**
+- Retomar a integração GraphStore somente após consolidação modular
 - Criar `app/integrations/graphstore_cli.py` (adapter CLI)
 - Criar `app/tool/graphstore_memory.py` (tool)
 - Criar `scripts/setup_graphstore_memory.py` (bootstrap)
@@ -781,20 +801,29 @@ Escopo sugerido: schema de Action Payload, contratos de adapter, validação mí
 - Atualizar `config/config.example.toml` com seção `[graphstore]`
 - Atualizar `.gitignore` com `.local_data/`
 
+### Futuro — Skill Adapter e Provider Registry
+
+**Alvo:** Arquitetura futura obrigatória (seção 18)
+
+**Ações:**
+- Criar `docs/SKILL_ADAPTER_AND_API_EXECUTION_CONTRACT_v0_1.md`
+- Criar `USER_CONFIGURABLE_SKILLS_AND_PROVIDER_REGISTRY_v0_1.md`
+- Definir schema de Action Payload, adapters, providers, validadores e retry
+
 ---
 
 ## 22. Backlog Arquitetural Pós-Limpeza
 
 > **Status:** Nenhum documento foi criado ainda. Apenas itens de backlog identificados.
 >
-> **Regra:** Nenhum destes documentos deve ser criado antes da conclusão das Fases 0–4 (limpeza estrutural) ou antes da validação do contrato Skill Adapter (Fase 5).
+> **Regra:** Nenhum destes documentos deve ser criado antes da conclusão da consolidação modular e do bootstrap mínimo das Fases 2A–2B.
 
 ### 22.1 Documentos Futuros Identificados
 
 | Documento | Escopo | Depende de |
 |-----------|--------|------------|
-| `USER_CONFIGURABLE_SKILLS_AND_PROVIDER_REGISTRY_v0_1.md` | Registry de skills, providers e tools configurável pelo usuário | Fase 5 (Skill Adapter), Fase 6 (GraphStore) |
-| `SKILL_ADAPTER_AND_API_EXECUTION_CONTRACT_v0_1.md` | Contrato da camada Skill Adapter | Fase 4 (simplificação concluída) |
+| `USER_CONFIGURABLE_SKILLS_AND_PROVIDER_REGISTRY_v0_1.md` | Registry de skills, providers e tools configurável pelo usuário | Futuro — Skill Adapter e Provider Registry |
+| `SKILL_ADAPTER_AND_API_EXECUTION_CONTRACT_v0_1.md` | Contrato da camada Skill Adapter | Futuro — Skill Adapter e Provider Registry |
 
 ### 22.2 Capacidades Futuras (Não Implementadas)
 
@@ -808,7 +837,7 @@ Escopo sugerido: schema de Action Payload, contratos de adapter, validação mí
 
 ### 22.3 Relação com a Limpeza Atual
 
-- Nenhum dos itens acima **bloqueia** a limpeza das Fases 1–4.
+- Nenhum dos itens acima **bloqueia** a consolidação das Fases 2A–2E.
 - A limpeza deve preservar os módulos base identificados na seção 18.4.
 - A criação destes documentos e capacidades deve ocorrer **após** a estabilização do fork, não antes.
 
@@ -828,9 +857,9 @@ main.py
       ├── app.tool.mcp.MCPClients  [KEEP_OPTIONAL]
       └── app.config.Config  [KEEP_CORE]
 
-app.daytona.*  [QUARANTINE]  ←── NENHUM import ativo
-app.tool.sandbox.*  [QUARANTINE]  ←── NENHUM import ativo
-sandbox_main.py  [QUARANTINE]  ←── entry point isolado
+app.daytona.*  [LEGACY_DEPENDENCY / INVESTIGATE]  ←── ainda possui importadores legados
+app.tool.sandbox.*  [LEGACY_DEPENDENCY / INVESTIGATE]  ←── depende do SDK daytona legado
+sandbox_main.py  [LEGACY_DEPENDENCY / INVESTIGATE]  ←── entry point herdado, não remover sem prova
 
 protocol.a2a.*  [DEFER_FUTURE]  ←── diretório separado
 examples/  [DEFER_FUTURE]  ←── diretório separado
