@@ -11,7 +11,7 @@
 
 ### Estado atual do projeto
 
-O repositório é uma adaptação local do OpenManus (v0.1.0, MIT, FoundationAgents). O fork original foi estendido com 3 integrações externas funcionais (Groq, Pollinations, Daytona HTTP) e documentação de suporte. O core do OpenManus permanece intacto, exceto pelo arquivo `app/agent/manus.py` que foi modificado para registrar as novas tools.
+O repositório é uma adaptação local do OpenManus (v0.1.0, MIT, FoundationAgents). O fork original foi estendido com 3 integrações externas funcionais (Groq, Pollinations, Daytona HTTP) e documentação de suporte. O core original foi preservado em grande parte, mas recebeu adaptações locais pontuais em 6 arquivos para garantir compatibilidade com as novas integrações e independência do ambiente sandbox.
 
 ### Módulos validados
 
@@ -110,21 +110,21 @@ O repositório é uma adaptação local do OpenManus (v0.1.0, MIT, FoundationAge
 
 ---
 
-## 3. Módulos originais do OpenManus
+## 3. Módulos originais do OpenManus (com adaptações locais pontuais)
 
 ### 3.1 Agentes
 
-| Agente | Arquivo | Risco de alteração | Observação |
+| Agente | Arquivo | Origem / Status | Observação |
 |---|---|---|---|
-| `BaseAgent` | `app/agent/base.py` | Alto | Base de toda hierarquia. Qualquer alteração afeta todos os agentes. Sem testes. |
-| `ReActAgent` | `app/agent/react.py` | Alto | Loop think/act. Núcleo do comportamento do agente. Sem testes. |
-| `ToolCallAgent` | `app/agent/toolcall.py` | Alto | Dispatcher de tools. Herdado por todos os agentes concretos. Sem testes. |
-| `Manus` | `app/agent/manus.py` | **Modificado localmente** | Adicionadas `DaytonaSandboxTool` e `ImageGeneratorTool`. Também adicionado suporte a MCP. |
-| `BrowserAgent` | `app/agent/browser.py` | Médio | Depende de `browser-use` e Playwright. Pode falhar sem browser. |
-| `MCPAgent` | `app/agent/mcp.py` | Baixo | Simples, conecta a servidores MCP. |
-| `SWEAgent` | `app/agent/swe.py` | Médio | Usa Bash + StrReplaceEditor. |
-| `DataAnalysis` | `app/agent/data_analysis.py` | Médio | Depende do chart_visualization (Node.js + Puppeteer). |
-| `SandboxManus` | `app/agent/sandbox_agent.py` | **Não usado localmente** | Depende do SDK Daytona. |
+| `BaseAgent` | `app/agent/base.py` | **Modificado localmente** (commit `4a05092`) | Adaptado para boot independente de sandbox. Base de toda hierarquia. Sem testes. |
+| `ReActAgent` | `app/agent/react.py` | Original | Loop think/act. Núcleo do comportamento do agente. Sem testes. |
+| `ToolCallAgent` | `app/agent/toolcall.py` | Original | Dispatcher de tools. Herdado por todos os agentes concretos. Sem testes. |
+| `Manus` | `app/agent/manus.py` | **Modificado localmente** (commits `6b403e6`, `8cb20ba`) | Adicionadas `DaytonaSandboxTool` e `ImageGeneratorTool`. Também adicionado suporte a MCP. |
+| `BrowserAgent` | `app/agent/browser.py` | **Modificado localmente** (commit `4a05092`) | Depende de `browser-use` e Playwright. Adaptado para boot independente de sandbox. |
+| `MCPAgent` | `app/agent/mcp.py` | Original | Simples, conecta a servidores MCP. |
+| `SWEAgent` | `app/agent/swe.py` | Original | Usa Bash + StrReplaceEditor. |
+| `DataAnalysis` | `app/agent/data_analysis.py` | Original | Depende do chart_visualization (Node.js + Puppeteer). |
+| `SandboxManus` | `app/agent/sandbox_agent.py` | Original / herdado do branch sandbox | Não usado localmente. Depende do SDK Daytona. |
 
 **Fato observado**: Nenhum agente possui testes unitários em `tests/`. Apenas `SandboxManus` tem testes indiretos via scripts em `scripts/` (que testam a tool, não o agente).
 
@@ -178,15 +178,21 @@ O repositório é uma adaptação local do OpenManus (v0.1.0, MIT, FoundationAge
 
 **OBS**: Os 4 testes em `tests/sandbox/` são os **únicos** testes unitários formais do repositório. Eles dependem de Docker instalado. A configuração atual (`config.toml`) não usa sandbox (`use_local` não definido, default `false`).
 
-### 3.6 Daytona SDK original (NÃO usado)
+### 3.6 Daytona SDK original (herdado do branch sandbox/upstream, não usado localmente)
 
-| Componente | Arquivo | Risco | Observação |
+Os diretórios `app/daytona/` e `app/tool/sandbox/` fazem parte do código original do OpenManus (herdados do branch sandbox do upstream e do merge `67d6c1c`). **Não são utilizados na configuração local validada**, que optou por uma implementação paralela via HTTP direto.
+
+| Componente | Arquivo | Origem | Observação |
 |---|---|---|---|
-| `create_sandbox` | `app/daytona/sandbox.py` | **Não usado** | Requer `pip install daytona==0.21.8`. |
-| `SandboxToolsBase` | `app/daytona/tool_base.py` | **Não usado** | Depende do SDK daytona. |
-| `README.md` | `app/daytona/README.md` | **Não usado** | Instruções para fluxo SDK. |
+| `create_sandbox` | `app/daytona/sandbox.py` | Original / herdado do branch sandbox | Requer `pip install daytona==0.21.8`. |
+| `SandboxToolsBase` | `app/daytona/tool_base.py` | Original / herdado do branch sandbox | Depende do SDK daytona. |
+| `README.md` | `app/daytona/README.md` | Original / herdado do branch sandbox | Instruções para fluxo SDK. |
+| `SandboxShellTool` | `app/tool/sandbox/sb_shell_tool.py` | Original / herdado do branch sandbox | Usa `app.daytona.tool_base` e SDK `daytona`. |
+| `SandboxFilesTool` | `app/tool/sandbox/sb_files_tool.py` | Original / herdado do branch sandbox | Operações de arquivo via SDK. |
+| `SandboxBrowserTool` | `app/tool/sandbox/sb_browser_tool.py` | Original / herdado do branch sandbox | Automação de navegador via SDK. |
+| `SandboxVisionTool` | `app/tool/sandbox/sb_vision_tool.py` | Original / herdado do branch sandbox | Visão computacional via SDK. |
 
-**Risco**: Presença de `from daytona import ...` e `from app.daytona import ...` em arquivos não utilizados. Se alguém executar `sandbox_main.py` sem o SDK instalado, receberá `ModuleNotFoundError`. Se o SDK estiver instalado, pode conflitar com a implementação HTTP.
+**Risco**: Presença de `from daytona import ...` e `from app.daytona import ...` em arquivos não utilizados. Se alguém executar `sandbox_main.py` sem o SDK instalado, receberá `ModuleNotFoundError`. Se o SDK estiver instalado, pode conflitar com a implementação HTTP. **Nenhuma remoção é recomendada nesta etapa** — estes arquivos pertencem ao upstream e podem ser úteis se no futuro o SDK for reabilitado.
 
 ### 3.7 MCP
 
@@ -287,6 +293,55 @@ O repositório é uma adaptação local do OpenManus (v0.1.0, MIT, FoundationAge
 
 **Risco**: Baixo. Mecanismo testado pelo uso. Falta de variável de ambiente trava o boot com erro claro.
 
+### 4.7 `app/agent/base.py` (modificado)
+
+| Aspecto | Detalhe |
+|---|---|
+| **Commit** | `4a05092` — `fix: make local boot independent from optional sandbox services` |
+| **Modificação** | Ajustado para que o boot do agente não dependa de serviços opcionais de sandbox |
+| **Risco** | **Alto**. Classe base de toda hierarquia de agentes. Erro nesta adaptação pode afetar todos os agentes (Manus, BrowserAgent, SWEAgent, etc.). Sem testes unitários. |
+| **Observação** | A alteração foi pontual e focada em remover dependência de sandbox no boot. |
+
+### 4.8 `app/agent/browser.py` (modificado)
+
+| Aspecto | Detalhe |
+|---|---|
+| **Commit** | `4a05092` — `fix: make local boot independent from optional sandbox services` |
+| **Modificação** | Adaptado para não exigir sandbox no boot do BrowserAgent |
+| **Risco** | **Médio**. Depende de `browser-use` e Playwright. A adaptação foi para boot independente de sandbox. |
+| **Observação** | O BrowserAgent é usado pelo Manus para automação de navegador. |
+
+### 4.9 `app/config.py` (modificado)
+
+| Aspecto | Detalhe |
+|---|---|
+| **Commit** | `4a05092` — `fix: make local boot independent from optional sandbox services` |
+| **Tamanho** | ~399 linhas |
+| **Modificação** | Ajustes na configuração para tornar sandbox services opcionais no boot |
+| **Risco** | **Alto**. Central de configurações do projeto. Qualquer erro de parsing ou schema quebra toda a aplicação. Sem testes unitários. |
+| **Observação** | Arquivo extenso e complexo. A alteração foi para permitir boot sem sandbox configurada. |
+
+### 4.10 `requirements.txt` (modificado)
+
+| Aspecto | Detalhe |
+|---|---|
+| **Commit** | `4a05092` — `fix: make local boot independent from optional sandbox services` |
+| **Tamanho** | 42 dependências |
+| **Modificação** | Ajuste de dependências para o ambiente local validado |
+| **Risco** | **Médio**. Mudanças em requirements podem quebrar instalação ou compatibilidade. |
+| **Observação** | `requirements.txt` já havia sido modificado múltiplas vezes pelo upstream. A alteração local foi pontual. |
+
+### 4.11 Resumo de arquivos modificados localmente
+
+| Arquivo | Commit | Tipo de alteração |
+|---|---|---|
+| `app/agent/base.py` | `4a05092` | Adaptação para boot independente de sandbox |
+| `app/agent/browser.py` | `4a05092` | Adaptação para boot independente de sandbox |
+| `app/agent/manus.py` | `6b403e6`, `8cb20ba` | Adição de `DaytonaSandboxTool`, `ImageGeneratorTool`, suporte MCP |
+| `app/config.py` | `4a05092` | Ajuste de configuração para sandbox opcional |
+| `app/tool/__init__.py` | `6b403e6`, `8cb20ba` | Exports de `ImageGeneratorTool`, `DaytonaSandboxTool` |
+| `requirements.txt` | `4a05092` | Ajuste de dependências |
+
 ---
 
 ## 5. Análise de risco por área
@@ -333,7 +388,6 @@ O repositório é uma adaptação local do OpenManus (v0.1.0, MIT, FoundationAge
 | Área | Motivo |
 |---|---|
 | `app/prompt/` | Apenas strings de texto (prompts). Alterar prompts pode afetar comportamento, mas não quebra execução. |
-| `app/agent/browser.py` | Especializado, impacto limitado. |
 | `app/agent/swe.py` | Especializado, ~30 linhas. |
 | `app/agent/data_analysis.py` | Especializado, ~30 linhas. |
 | `app/agent/mcp.py` | Simples, ~100 linhas. |
@@ -348,7 +402,7 @@ O repositório é uma adaptação local do OpenManus (v0.1.0, MIT, FoundationAge
 
 ## 6. Auditoria de dependências
 
-### 6.1 `requirements.txt` (42 dependências)
+### 6.1 `requirements.txt` (42 dependências, modificado localmente no commit `4a05092`)
 
 | Dependência | Versão | Risco | Observação |
 |---|---|---|---|
@@ -577,18 +631,22 @@ Após a criação de uma suíte de testes formal (`tests/`), os scripts de diagn
 | `app/tool/image_generator.py` | `httpx`, `app.tool.base` | Médio — depende do BaseTool |
 | `app/agent/manus.py` (modificado) | `app.tool.daytona_sandbox`, `app.tool.image_generator`, `app.tool.mcp` | Alto — vários acoplamentos |
 
-| Módulo original | Importado por | Risco de quebra |
+| Módulo original (modificado localmente) | Importado por | Risco de quebra |
 |---|---|---|
 | `app/tool/base.py` | `daytona_sandbox.py`, `image_generator.py` | Alto — qualquer mudança na interface BaseTool quebra as tools locais |
 | `app/agent/toolcall.py` | `manus.py` | Alto — qualquer mudança no fluxo think/act afeta o Manus |
-| `app/config.py` | `manus.py` | Médio — mudanças no schema de config podem afetar inicialização |
+| `app/agent/base.py` | Todos os agentes | Alto — classe base; qualquer mudança afeta toda hierarquia |
+| `app/agent/browser.py` | `manus.py` | Médio — BrowserAgent é usado pelo Manus |
+| `app/config.py` | `manus.py`, `llm.py`, `daytona_sandbox.py` | Médio — mudanças no schema de config podem afetar inicialização |
+
+**Observação**: Os arquivos `app/agent/base.py`, `app/agent/browser.py`, `app/config.py` e `requirements.txt` foram **modificados localmente** (commit `4a05092`), mas suas alterações foram adaptações internas (independência de sandbox), não introdução de novos acoplamentos.
 
 ## Apêndice B: Sumário de arquivos por origem
 
 | Origem | Quantidade | Caminhos |
 |---|---|---|
-| Original (upstream) | ~80+ | Todo `app/` exceto modificações, `config/*.example*`, `.github/`, `tests/sandbox/`, `protocol/`, `examples/`, `Dockerfile`, `setup.py`, `requirements.txt`, `main.py`, `run_*.py`, `sandbox_main.py`, `README.md` |
+| Original (upstream) ou herdado de branch upstream | ~80+ | `app/agent/react.py`, `app/agent/toolcall.py`, `app/agent/mcp.py`, `app/agent/swe.py`, `app/agent/data_analysis.py`, `app/agent/sandbox_agent.py`, `app/tool/bash.py`, `app/tool/python_execute.py`, `app/tool/str_replace_editor.py`, `app/tool/browser_use_tool.py`, `app/tool/web_search.py`, `app/tool/create_chat_completion.py`, `app/tool/ask_human.py`, `app/tool/planning.py`, `app/tool/file_operators.py`, `app/tool/crawl4ai.py`, `app/tool/computer_use_tool.py`, `app/tool/mcp.py`, `app/tool/search/*`, `app/tool/sandbox/*` (herdado), `app/tool/chart_visualization/*`, `app/daytona/*` (herdado), `app/sandbox/*`, `app/flow/*`, `app/prompt/*`, `app/mcp/*`, `app/utils/*`, `app/llm.py`, `app/schema.py`, `app/exceptions.py`, `app/logger.py`, `app/bedrock.py`, `config/*.example*`, `.github/*`, `tests/sandbox/*`, `protocol/a2a/*`, `examples/*`, `Dockerfile`, `setup.py`, `main.py`, `run_*.py`, `sandbox_main.py`, `README.md` |
 | Adicionado localmente | 14 | `app/integrations/__init__.py`, `app/integrations/daytona_http.py`, `app/tool/daytona_sandbox.py`, `app/tool/image_generator.py`, `scripts/` (10 arquivos), `test_groq.py` |
-| Modificado localmente | 2 | `app/agent/manus.py`, `app/tool/__init__.py` |
+| Modificado localmente | 6 | `app/agent/base.py` (commit `4a05092`), `app/agent/browser.py` (commit `4a05092`), `app/agent/manus.py` (commits `6b403e6`, `8cb20ba`), `app/config.py` (commit `4a05092`), `app/tool/__init__.py` (commits `6b403e6`, `8cb20ba`), `requirements.txt` (commit `4a05092`) |
 | Adicionado localmente (docs) | 2 | `docs/PROJECT_STATUS.md`, `docs/DAYTONA_SANDBOX_TOOL_CONTRACT_v0_2_1.md` |
 | Adicionado localmente (config) | 1 | `config/config.toml` (ignorado) |
