@@ -1,0 +1,721 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/anomalyco/OpenManus/contracts/image_provider_capability/schemas/image_provider_capability_map.schema.json",
+  "title": "Image Provider Capability Map Schema",
+  "description": "Schema for describing what an image provider API supports: endpoint modes, auth, input/output capabilities, limits, model-specific capabilities, versioning, and compatibility policies.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "provider",
+    "capability_map",
+    "endpoint_modes",
+    "auth",
+    "input_capabilities",
+    "output_capabilities",
+    "limits",
+    "model_capabilities",
+    "unsupported_fields_policy",
+    "versioning",
+    "compatibility",
+    "validation_policy",
+    "known_limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of this schema definition used to produce the capability map file.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["0.1.0"]
+    },
+    "provider": {
+      "type": "object",
+      "description": "Identifies the image provider this capability map describes.",
+      "required": ["provider_id", "provider_name", "provider_kind", "provider_status"],
+      "additionalProperties": false,
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "description": "Technical identifier for the provider, used in code resolution.",
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "examples": ["pollinations", "openai-dall-e", "stability-ai"]
+        },
+        "provider_name": {
+          "type": "string",
+          "description": "Human-readable name of the provider.",
+          "examples": ["Pollinations.ai", "OpenAI DALL-E", "Stability AI"]
+        },
+        "provider_kind": {
+          "type": "string",
+          "description": "Category of the provider deployment model.",
+          "enum": [
+            "remote_api",
+            "local_api",
+            "local_workflow",
+            "hosted_workflow",
+            "mock",
+            "unknown"
+          ]
+        },
+        "provider_status": {
+          "type": "string",
+          "description": "Operational status of this provider in the system.",
+          "enum": [
+            "active",
+            "experimental",
+            "deprecated",
+            "planned",
+            "unknown"
+          ]
+        },
+        "documentation_refs": {
+          "type": "array",
+          "description": "Sources consulted to build this capability map. May be empty for mock/unknown providers, but validation policy may require refs for active providers.",
+          "items": {
+            "$ref": "#/$defs/DocumentationRef"
+          },
+          "minItems": 0
+        }
+      }
+    },
+    "capability_map": {
+      "type": "object",
+      "description": "Metadata about this capability map document itself.",
+      "required": [
+        "capability_map_id",
+        "capability_map_version",
+        "capability_map_status",
+        "scope",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "capability_map_id": {
+          "type": "string",
+          "description": "Unique identifier for this capability map document.",
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "examples": ["pollinations_api_v0_1", "dalle_current_tool_v0_1"]
+        },
+        "capability_map_version": {
+          "type": "string",
+          "description": "Semantic version of this capability map. Incremented when capabilities are added, removed, or changed.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "examples": ["0.1.0"]
+        },
+        "capability_map_status": {
+          "type": "string",
+          "enum": ["draft", "reviewed", "approved", "deprecated"]
+        },
+        "scope": {
+          "type": "string",
+          "description": "What aspect of the provider this map describes.",
+          "enum": ["api_real", "current_tool", "adapter", "mock", "unknown"]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Free-text description of this capability map's purpose and scope."
+        }
+      }
+    },
+    "endpoint_modes": {
+      "type": "array",
+      "description": "Endpoint modes this provider supports. At least one mode is required.",
+      "items": {
+        "$ref": "#/$defs/EndpointMode"
+      },
+      "minItems": 1
+    },
+    "auth": {
+      "type": "object",
+      "description": "Authentication configuration and requirements for this provider.",
+      "required": ["supports_auth", "auth_modes", "preferred_auth_mode", "secret_handling_policy"],
+      "additionalProperties": false,
+      "properties": {
+        "supports_auth": {
+          "type": "boolean",
+          "description": "Whether this provider requires or supports authentication."
+        },
+        "auth_modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "none",
+              "api_key_query",
+              "bearer_token",
+              "basic_auth",
+              "custom_header",
+              "local_only",
+              "unknown"
+            ]
+          },
+          "minItems": 1
+        },
+        "preferred_auth_mode": {
+          "type": "string",
+          "enum": [
+            "none",
+            "api_key_query",
+            "bearer_token",
+            "basic_auth",
+            "custom_header",
+            "local_only",
+            "unknown"
+          ]
+        },
+        "secret_handling_policy": {
+          "type": "string",
+          "enum": ["env_var", "secret_store", "user_config", "none", "unknown"]
+        }
+      }
+    },
+    "input_capabilities": {
+      "type": "object",
+      "description": "Capabilities for input fields accepted by this provider.",
+      "required": [
+        "prompt",
+        "negative_prompt",
+        "model",
+        "width",
+        "height",
+        "size",
+        "seed",
+        "n",
+        "quality",
+        "response_format",
+        "user",
+        "reference_image",
+        "mask",
+        "safe",
+        "steps",
+        "guidance",
+        "transparent_background",
+        "metadata_request",
+        "provider_options"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "prompt": { "$ref": "#/$defs/CapabilityStatus" },
+        "negative_prompt": { "$ref": "#/$defs/CapabilityStatus" },
+        "model": { "$ref": "#/$defs/CapabilityStatus" },
+        "width": { "$ref": "#/$defs/CapabilityStatus" },
+        "height": { "$ref": "#/$defs/CapabilityStatus" },
+        "size": { "$ref": "#/$defs/CapabilityStatus" },
+        "seed": { "$ref": "#/$defs/CapabilityStatus" },
+        "n": { "$ref": "#/$defs/CapabilityStatus" },
+        "quality": { "$ref": "#/$defs/CapabilityStatus" },
+        "response_format": { "$ref": "#/$defs/CapabilityStatus" },
+        "user": { "$ref": "#/$defs/CapabilityStatus" },
+        "reference_image": { "$ref": "#/$defs/CapabilityStatus" },
+        "mask": { "$ref": "#/$defs/CapabilityStatus" },
+        "safe": { "$ref": "#/$defs/CapabilityStatus" },
+        "steps": { "$ref": "#/$defs/CapabilityStatus" },
+        "guidance": { "$ref": "#/$defs/CapabilityStatus" },
+        "transparent_background": { "$ref": "#/$defs/CapabilityStatus" },
+        "metadata_request": { "$ref": "#/$defs/CapabilityStatus" },
+        "provider_options": { "$ref": "#/$defs/CapabilityStatus" }
+      }
+    },
+    "output_capabilities": {
+      "type": "object",
+      "description": "Capabilities for output formats and metadata returned by this provider.",
+      "required": [
+        "binary_image",
+        "remote_url",
+        "b64_json",
+        "local_path",
+        "mime_type",
+        "width_height_metadata",
+        "seed_used",
+        "model_used",
+        "prompt_echo",
+        "revised_prompt",
+        "structured_response",
+        "generation_metadata_response",
+        "error_json"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "binary_image": { "$ref": "#/$defs/CapabilityStatus" },
+        "remote_url": { "$ref": "#/$defs/CapabilityStatus" },
+        "b64_json": { "$ref": "#/$defs/CapabilityStatus" },
+        "local_path": { "$ref": "#/$defs/CapabilityStatus" },
+        "mime_type": { "$ref": "#/$defs/CapabilityStatus" },
+        "width_height_metadata": { "$ref": "#/$defs/CapabilityStatus" },
+        "seed_used": { "$ref": "#/$defs/CapabilityStatus" },
+        "model_used": { "$ref": "#/$defs/CapabilityStatus" },
+        "prompt_echo": { "$ref": "#/$defs/CapabilityStatus" },
+        "revised_prompt": { "$ref": "#/$defs/CapabilityStatus" },
+        "structured_response": { "$ref": "#/$defs/CapabilityStatus" },
+        "generation_metadata_response": { "$ref": "#/$defs/CapabilityStatus" },
+        "error_json": { "$ref": "#/$defs/CapabilityStatus" }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "description": "Known limits of this provider.",
+      "required": [
+        "max_prompt_chars",
+        "max_prompt_chars_scope",
+        "max_images_per_request",
+        "supported_widths",
+        "supported_heights",
+        "supported_sizes",
+        "rate_limit_policy",
+        "payload_size_limit_mb",
+        "timeout_seconds_recommended"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "max_prompt_chars": {
+          "type": ["integer", "null"],
+          "description": "Maximum character count for the prompt. Null if unknown or unlimited.",
+          "minimum": 0
+        },
+        "max_prompt_chars_scope": {
+          "type": "string",
+          "enum": ["get_only", "post_only", "all_endpoints", "unknown", "not_applicable"]
+        },
+        "max_images_per_request": {
+          "type": ["integer", "null"],
+          "description": "Maximum number of images returned per request. Null if unknown.",
+          "minimum": 0
+        },
+        "supported_widths": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 },
+          "description": "Explicitly supported widths. Empty array means any or unknown."
+        },
+        "supported_heights": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 },
+          "description": "Explicitly supported heights. Empty array means any or unknown."
+        },
+        "supported_sizes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Supported size strings like '1024x1024'. Empty array means any or unknown."
+        },
+        "rate_limit_policy": {
+          "type": "string",
+          "enum": ["documented", "undocumented", "provider_account_based", "unknown"]
+        },
+        "payload_size_limit_mb": {
+          "type": ["number", "null"],
+          "description": "Maximum payload size in megabytes. Null if unknown or not applicable.",
+          "minimum": 0
+        },
+        "timeout_seconds_recommended": {
+          "type": ["number", "null"],
+          "description": "Recommended timeout in seconds for this provider. Null if unknown.",
+          "minimum": 0
+        }
+      }
+    },
+    "model_capabilities": {
+      "type": "array",
+      "description": "Model-specific capability overrides. Models not listed inherit the global capability defaults.",
+      "items": {
+        "$ref": "#/$defs/ModelCapability"
+      }
+    },
+    "unsupported_fields_policy": {
+      "type": "object",
+      "description": "Policy for handling fields not supported by the provider.",
+      "required": [
+        "on_unsupported_noncritical",
+        "on_unsupported_critical",
+        "on_conflict",
+        "loss_report_required"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "on_unsupported_noncritical": {
+          "type": "string",
+          "enum": [
+            "drop_with_warning",
+            "flatten_to_prompt",
+            "block",
+            "ignore",
+            "unknown"
+          ]
+        },
+        "on_unsupported_critical": {
+          "type": "string",
+          "enum": [
+            "block",
+            "flatten_to_prompt_with_loss_report",
+            "send_with_warning",
+            "unknown"
+          ]
+        },
+        "on_conflict": {
+          "type": "string",
+          "enum": [
+            "block",
+            "prefer_documentation",
+            "prefer_local_policy",
+            "require_manual_review",
+            "unknown"
+          ]
+        },
+        "loss_report_required": {
+          "type": "boolean",
+          "description": "Whether a loss report must be generated when fields are dropped or modified."
+        }
+      }
+    },
+    "versioning": {
+      "type": "object",
+      "description": "Version identifiers for traceability across the adapter stack.",
+      "required": [
+        "adapter_contract_version",
+        "capability_map_version",
+        "formatting_policy_version",
+        "provider_api_version",
+        "last_reviewed_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "adapter_contract_version": {
+          "type": "string",
+          "description": "Version of the adapter contract that this provider implements.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "examples": ["0.1.0"]
+        },
+        "capability_map_version": {
+          "type": "string",
+          "description": "Version of this capability map (mirrors capability_map.capability_map_version for consistency).",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "examples": ["0.1.0"]
+        },
+        "formatting_policy_version": {
+          "type": "string",
+          "description": "Version of the formatting policy associated with this provider.",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "examples": ["0.1.0"]
+        },
+        "provider_api_version": {
+          "type": ["string", "null"],
+          "description": "Version string of the upstream provider API, if documented. Null if not applicable or unknown."
+        },
+        "last_reviewed_at": {
+          "type": "string",
+          "description": "ISO 8601 timestamp of the last review of this capability map.",
+          "format": "date-time"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "description": "Declares compatibility with other contracts and system components.",
+      "required": [
+        "compatible_with_adapter_contract_versions",
+        "compatible_with_formatting_policy_versions",
+        "requires_provider_request_packet",
+        "requires_fidelity_gate",
+        "requires_loss_report"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "compatible_with_adapter_contract_versions": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+          "description": "Adapter contract versions this capability map is compatible with."
+        },
+        "compatible_with_formatting_policy_versions": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+          "description": "Formatting policy versions this capability map is compatible with."
+        },
+        "requires_provider_request_packet": {
+          "type": "boolean",
+          "description": "Whether the adapter must produce a Provider Request Packet before making the HTTP call."
+        },
+        "requires_fidelity_gate": {
+          "type": "boolean",
+          "description": "Whether the Fidelity Gate must validate the result before it reaches the user."
+        },
+        "requires_loss_report": {
+          "type": "boolean",
+          "description": "Whether a loss report is mandatory for every request using this capability map."
+        }
+      }
+    },
+    "validation_policy": {
+      "type": "object",
+      "description": "Validation rules applied when loading and using this capability map.",
+      "required": [
+        "offline_validation_required",
+        "runtime_validation_required",
+        "forbid_unknown_required_fields",
+        "forbid_silent_drop_of_critical_fields",
+        "require_documentation_refs",
+        "require_version_identifiers"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "offline_validation_required": {
+          "type": "boolean",
+          "description": "Whether this capability map must pass offline schema validation before use."
+        },
+        "runtime_validation_required": {
+          "type": "boolean",
+          "description": "Whether runtime validation must be performed against the capability map before each request."
+        },
+        "forbid_unknown_required_fields": {
+          "type": "boolean",
+          "description": "Whether fields unknown to this capability map but present in the request should cause an error."
+        },
+        "forbid_silent_drop_of_critical_fields": {
+          "type": "boolean",
+          "description": "Whether critical fields defined by local policy must never be silently dropped."
+        },
+        "require_documentation_refs": {
+          "type": "boolean",
+          "description": "Whether documentation references are required for this capability map."
+        },
+        "require_version_identifiers": {
+          "type": "boolean",
+          "description": "Whether version identifiers must be present in the Provider Request Packet and NormalizedImageResult."
+        }
+      }
+    },
+    "known_limitations": {
+      "type": "array",
+      "description": "Known limitations not fully captured by the input/output capability fields.",
+      "items": {
+        "$ref": "#/$defs/KnownLimitation"
+      }
+    }
+  },
+  "$defs": {
+    "DocumentationRef": {
+      "type": "object",
+      "description": "Reference to a documentation source consulted when building the capability map.",
+      "required": ["label", "url", "source_type", "confidence", "checked_at"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short label for the reference."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the source document."
+        },
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "official_docs",
+            "official_repo",
+            "official_sdk",
+            "official_site",
+            "issue",
+            "commit",
+            "external_research",
+            "local_code",
+            "unknown"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "unknown"],
+          "description": "Confidence level for the information extracted from this source. Omit or set to 'unknown' if not yet assessed."
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when this source was last checked."
+        }
+      }
+    },
+    "CapabilityStatus": {
+      "type": "object",
+      "description": "Describes the support level for a single capability field.",
+      "required": ["status", "field_name", "supported_endpoint_modes", "required_by_provider", "required_by_local_policy", "notes"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "supported",
+            "supported_limited",
+            "model_dependent",
+            "not_supported",
+            "not_documented",
+            "removed_evidence",
+            "conflict",
+            "unknown",
+            "not_confirmed",
+            "not_exposed"
+          ]
+        },
+        "field_name": {
+          "type": ["string", "null"],
+          "description": "Name of the field in the provider's API. Null if it maps to no specific field (e.g., flattened into prompt)."
+        },
+        "supported_endpoint_modes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Endpoint modes where this field is supported. Empty array means all modes or unknown."
+        },
+        "required_by_provider": {
+          "type": "boolean",
+          "description": "Whether this field is required by the provider's API."
+        },
+        "required_by_local_policy": {
+          "type": "boolean",
+          "description": "Whether this field is required by local policy even if not required by the provider."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free-text notes about this capability, such as model dependencies, range limits, or behavioral caveats."
+        }
+      }
+    },
+    "EndpointMode": {
+      "type": "object",
+      "description": "Describes a single endpoint mode supported by the provider.",
+      "required": [
+        "mode_id",
+        "mode_type",
+        "method",
+        "base_url",
+        "path_template",
+        "request_format",
+        "response_format",
+        "supported",
+        "requires_auth"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mode_id": {
+          "type": "string",
+          "description": "Unique identifier for this endpoint mode within the capability map."
+        },
+        "mode_type": {
+          "type": "string",
+          "enum": [
+            "text_to_image_get",
+            "text_to_image_post_json",
+            "image_edit_json",
+            "image_edit_multipart",
+            "image_to_image",
+            "inpainting",
+            "local_workflow",
+            "async_job",
+            "websocket_stream",
+            "unknown"
+          ]
+        },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "LOCAL", "UNKNOWN"]
+        },
+        "base_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Base URL for this endpoint mode."
+        },
+        "path_template": {
+          "type": "string",
+          "description": "Path template with placeholders. Ex: '/v1/images/generations' or '/image/{prompt}'."
+        },
+        "request_format": {
+          "type": "string",
+          "enum": ["query_params", "json_body", "multipart_form", "workflow_json", "local_file", "unknown"]
+        },
+        "response_format": {
+          "type": "string",
+          "enum": ["binary_image", "json", "url_json", "b64_json", "local_file", "stream", "unknown"]
+        },
+        "supported": {
+          "type": "boolean",
+          "description": "Whether this mode is currently supported and testable."
+        },
+        "requires_auth": {
+          "type": "boolean",
+          "description": "Whether this endpoint mode requires authentication."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free-text notes about this endpoint mode."
+        }
+      }
+    },
+    "ModelCapability": {
+      "type": "object",
+      "description": "Capability overrides for a specific model. Models not listed inherit the global defaults.",
+      "required": ["model_id", "model_name", "status", "supports"],
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "description": "Technical model identifier used in API calls.",
+          "examples": ["flux", "zimage", "seedream", "gptimage", "dall-e-3"]
+        },
+        "model_name": {
+          "type": "string",
+          "description": "Human-readable model name."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "experimental", "deprecated", "unknown"],
+          "description": "Current status of this model."
+        },
+        "supports": {
+          "type": "object",
+          "description": "Capability overrides for this specific model.",
+          "required": ["seed", "quality", "reference_image", "image_edit", "transparent_background", "safe"],
+          "additionalProperties": false,
+          "properties": {
+            "seed": { "$ref": "#/$defs/CapabilityStatus" },
+            "quality": { "$ref": "#/$defs/CapabilityStatus" },
+            "reference_image": { "$ref": "#/$defs/CapabilityStatus" },
+            "image_edit": { "$ref": "#/$defs/CapabilityStatus" },
+            "transparent_background": { "$ref": "#/$defs/CapabilityStatus" },
+            "safe": { "$ref": "#/$defs/CapabilityStatus" }
+          }
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free-text notes about this model, such as known quirks or deprecation timelines."
+        }
+      }
+    },
+    "KnownLimitation": {
+      "type": "object",
+      "description": "A known limitation not fully captured by input/output capability fields.",
+      "required": ["limitation_id", "severity", "description", "affected_capabilities", "mitigation"],
+      "additionalProperties": false,
+      "properties": {
+        "limitation_id": {
+          "type": "string",
+          "description": "Unique identifier for this limitation within the capability map."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Description of the limitation and its impact."
+        },
+        "affected_capabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Capability field names affected by this limitation."
+        },
+        "mitigation": {
+          "type": "string",
+          "description": "Suggested mitigation strategy for this limitation."
+        }
+      }
+    }
+  }
+}
